@@ -1,0 +1,1 @@
+import{f as u,h as r,p as e,i as s,E as t}from"./index-DCdOv1T2.js";async function c(){return r(t.COUNTRIES)}async function C(n){return r(`${t.COUNTRIES}/${n}`)}async function y(n){return s(t.COUNTRIES,n)}async function i(n,a){return e(`${t.COUNTRIES}/${n}`,a)}async function f(n){return u(`${t.COUNTRIES}/${n}`)}export{C as a,y as c,f as d,c as g,i as u};

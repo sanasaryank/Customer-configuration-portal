@@ -11,13 +11,13 @@
  */
 export function omitEmptyPasswords<T extends Record<string, unknown>>(
   payload: T,
-  passwordKeys: (keyof T)[],
+  passwordKeys: string[],
 ): Partial<T> {
   const result = { ...payload };
   for (const key of passwordKeys) {
-    const value = result[key];
+    const value = result[key as keyof T];
     if (value === '' || value === null || value === undefined) {
-      delete result[key];
+      delete result[key as keyof T];
     }
   }
   return result;

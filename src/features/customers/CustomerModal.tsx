@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
+import React from 'react';
 import { useForm, FormProvider, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -136,23 +137,16 @@ function defaultFormValues(): CustomerFormValues {
 // ---- Build write payload from form values ----
 
 function buildCreatePayload(values: CustomerFormValues): CustomerCreatePayload {
-  // Omit empty passwords from connectionInfo
-  const connInfo = omitEmptyPasswordsNested(
-    values.connectionInfo as unknown as Record<string, unknown>,
-    'serverPassword' as never,
-    [],
-  );
-  // Actually do it properly:
-  const connectionInfoWrite: CustomerFormConnectionInfo & { serverPassword?: string; password?: string } = {
-    ...values.connectionInfo,
-  };
-  if (!connectionInfoWrite.serverPassword) delete connectionInfoWrite.serverPassword;
-  if (!connectionInfoWrite.password) delete connectionInfoWrite.password;
+  // Omit empty write-only passwords from connectionInfo (spec §2.5)
+  const rawConn = { ...values.connectionInfo } as Record<string, unknown>;
+  if (!rawConn['serverPassword']) delete rawConn['serverPassword'];
+  if (!rawConn['password']) delete rawConn['password'];
+  const connectionInfoWrite = rawConn as unknown as CustomerFormConnectionInfo;
 
   // Omit empty passwords from users
   const users = values.users.map((u: CustomerFormUser) => {
-    const cleaned = omitEmptyPasswords({ ...u }, ['password'] as (keyof typeof u)[]);
-    return cleaned as CustomerFormUser;
+    const cleaned = omitEmptyPasswords({ ...u } as Record<string, unknown>, ['password'] as string[]);
+    return cleaned as unknown as CustomerFormUser;
   });
 
   return {
@@ -202,12 +196,14 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
     [allProducts],
   );
 
-  const methods = useForm<CustomerFormValues>({
+  // useForm with complex nested Zod schema: use type cast to avoid TS2589 deep instantiation
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const methods = (useForm as any)({
     resolver: zodResolver(schema),
     defaultValues: defaultFormValues(),
-  });
+  }) as ReturnType<typeof useForm<CustomerFormValues>>;
 
-  const { reset, register, handleSubmit, control, setValue, formState: { errors } } = methods;
+  const { reset, register, handleSubmit, control, setValue } = methods;
 
   // Populate form from existing data (edit mode)
   useEffect(() => {
