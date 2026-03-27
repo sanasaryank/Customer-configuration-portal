@@ -1,0 +1,1 @@
+import{f as c,h as e,p as i,i as s,D as a}from"./index-DCdOv1T2.js";async function u(t){return e(a[t])}async function y(t,n){return e(`${a[t]}/${n}`)}async function D(t,n){return s(a[t],n)}async function f(t,n,r){return i(`${a[t]}/${n}`,r)}async function m(t,n){return c(`${a[t]}/${n}`)}export{y as a,D as c,m as d,u as g,f as u};

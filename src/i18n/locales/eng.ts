@@ -1,0 +1,225 @@
+// English locale — source of truth for all static UI strings
+const eng = {
+  // Common
+  common: {
+    save: 'Save',
+    cancel: 'Cancel',
+    create: 'Create',
+    edit: 'Edit',
+    delete: 'Delete',
+    block: 'Block',
+    unblock: 'Unblock',
+    history: 'History',
+    search: 'Search',
+    loading: 'Loading...',
+    error: 'Error',
+    noData: 'No data',
+    actions: 'Actions',
+    yes: 'Yes',
+    no: 'No',
+    confirm: 'Confirm',
+    close: 'Close',
+    add: 'Add',
+    remove: 'Remove',
+    name: 'Name',
+    description: 'Description',
+    id: 'ID',
+    status: 'Status',
+    blocked: 'Blocked',
+    active: 'Active',
+    page: 'Page',
+    of: 'of',
+    rowsPerPage: 'Rows per page',
+    required: 'Required',
+    optional: 'Optional',
+    selectLanguage: 'Language',
+    logout: 'Logout',
+    confirmDelete: 'Are you sure you want to delete this item?',
+    deleteTitle: 'Delete Confirmation',
+    errorOccurred: 'An error occurred. Please try again.',
+    backToList: 'Back to list',
+    prevMonth: 'Previous month',
+    nextMonth: 'Next month',
+    today: 'Today',
+  },
+
+  // Auth
+  auth: {
+    login: 'Login',
+    username: 'Username',
+    password: 'Password',
+    loginButton: 'Sign In',
+    loginError: 'Invalid username or password',
+    loggingIn: 'Signing in...',
+  },
+
+  // Navigation
+  nav: {
+    customers: 'Customers',
+    products: 'Products',
+    history: 'History',
+    handbooks: 'Handbooks',
+    employees: 'Employees',
+    workingDays: 'Working Days',
+    integrationTypes: 'Integration Types',
+    restaurantTypes: 'Restaurant Types',
+    hotelTypes: 'Hotel Types',
+    menuTypes: 'Menu Types',
+    priceSegments: 'Price Segments',
+    productGroups: 'Product Groups',
+    customerGroups: 'Customer Groups',
+    customerStatus: 'Customer Status',
+    countries: 'Countries',
+    cities: 'Cities',
+    districts: 'Districts',
+  },
+
+  // Translation editor
+  translation: {
+    arm: 'Armenian',
+    eng: 'English',
+    rus: 'Russian',
+  },
+
+  // Employees
+  employees: {
+    title: 'Employees',
+    createTitle: 'Create Employee',
+    editTitle: 'Edit Employee',
+    username: 'Username',
+    password: 'Password',
+    passwordHint: 'Leave empty to keep existing password',
+    role: 'Role',
+    admin: 'Admin',
+    superadmin: 'Super Admin',
+    isBlocked: 'Blocked',
+  },
+
+  // Countries
+  countries: {
+    title: 'Countries',
+    createTitle: 'Create Country',
+    editTitle: 'Edit Country',
+  },
+
+  // Cities
+  cities: {
+    title: 'Cities',
+    createTitle: 'Create City',
+    editTitle: 'Edit City',
+    country: 'Country',
+  },
+
+  // Districts
+  districts: {
+    title: 'Districts',
+    createTitle: 'Create District',
+    editTitle: 'Edit District',
+    city: 'City',
+  },
+
+  // Products
+  products: {
+    title: 'Products',
+    createTitle: 'Create Product',
+    editTitle: 'Edit Product',
+    group: 'Product Group',
+    hasUsers: 'Has Users',
+    licenseTemplate: 'License Template',
+    addField: 'Add Field',
+    fieldName: 'Field Name',
+    fieldKind: 'Field Type',
+    fieldRequired: 'Required',
+    kindString: 'String',
+    kindNumber: 'Number',
+    kindDate: 'Date',
+    kindTime: 'Time',
+    kindDatetime: 'DateTime',
+    kindBoolean: 'Boolean',
+  },
+
+  // Customers
+  customers: {
+    title: 'Customers',
+    createTitle: 'Create Customer',
+    editTitle: 'Edit Customer',
+    generalInfo: 'General Info',
+    contactInfo: 'Contact Info',
+    connectionInfo: 'Connection Info',
+    products: 'Products',
+    licenseInfo: 'License Info',
+    users: 'Users',
+    responsible: 'Responsible',
+    statusId: 'Status',
+    groupId: 'Group',
+    legalName: 'Legal Name',
+    brandName: 'Brand Name',
+    crmLink: 'CRM Link',
+    tin: 'TIN',
+    bankAccount: 'Bank Account',
+    address: 'Address',
+    legalAddress: 'Legal Address',
+    phone: 'Phone',
+    email: 'Email',
+    country: 'Country',
+    city: 'City',
+    district: 'District',
+    lat: 'Latitude',
+    lng: 'Longitude',
+    connectionType: 'Connection Type',
+    host: 'Host',
+    port: 'Port',
+    serverUsername: 'Server Username',
+    serverPassword: 'Server Password',
+    username: 'Username',
+    password: 'Password',
+    hardwareKey: 'Hardware Key',
+    licenseKey: 'License Key',
+    productId: 'Product',
+    movedFrom: 'Moved From',
+    movedTo: 'Moved To',
+    addUser: 'Add User',
+    restoreEmail: 'Restore Email',
+    allowedProducts: 'Allowed Products',
+    disabledLicenseBlock: 'Product removed — license disabled',
+    noLicenseTemplate: 'No license template defined for this product',
+    productTypes: 'Product Types',
+    passwordHint: 'Leave empty to keep existing password',
+  },
+
+  // Working days
+  workingDays: {
+    title: 'Working Days',
+    workingDay: 'Working Day',
+    notWorkingDay: 'Not Working Day',
+    toggleDay: 'Toggle day',
+  },
+
+  // History
+  history: {
+    title: 'History',
+    date: 'Date',
+    user: 'User',
+    actionType: 'Action',
+    objectType: 'Object Type',
+    objectId: 'Object ID',
+    create: 'Create',
+    update: 'Update',
+    delete: 'Delete',
+    field: 'Field',
+    oldValue: 'Old Value',
+    newValue: 'New Value',
+    details: 'History Details',
+    noChanges: 'No changes recorded',
+  },
+
+  // Dictionary (generic)
+  dictionary: {
+    title: 'Dictionary',
+    createTitle: 'Create Item',
+    editTitle: 'Edit Item',
+  },
+} as const;
+
+export default eng;
+export type Translations = typeof eng;

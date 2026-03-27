@@ -1,0 +1,188 @@
+import React from 'react';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { getEmployee, createEmployee, updateEmployee } from '../../api/employees';
+import { queryKeys } from '../../queryKeys';
+import type { Employee } from '../../types/employee';
+import { omitEmptyPasswords } from '../../utils/password';
+import { Modal } from '../../components/ui/Modal';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
+import { Textarea } from '../../components/ui/Textarea';
+import { Checkbox } from '../../components/ui/Checkbox';
+import { TranslationEditor } from '../../components/form/TranslationEditor';
+import { PasswordField } from '../../components/form/PasswordField';
+import { Spinner } from '../../components/ui/Spinner';
+
+const schema = z.object({
+  username: z.string().min(1),
+  password: z.string(),
+  name: z.object({ ARM: z.string(), ENG: z.string(), RUS: z.string() }),
+  role: z.enum(['admin', 'superadmin']),
+  isBlocked: z.boolean(),
+  description: z.string(),
+});
+
+type FormValues = z.infer<typeof schema>;
+
+interface EmployeeModalProps {
+  editId: string | null; // null = create mode
+  onClose: () => void;
+}
+
+export default function EmployeeModal({ editId, onClose }: EmployeeModalProps) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const isEdit = editId !== null;
+
+  const { data: existing, isLoading: loadingItem } = useQuery({
+    queryKey: queryKeys.employees.byId(editId ?? ''),
+    queryFn: () => getEmployee(editId!),
+    enabled: isEdit,
+  });
+
+  const methods = useForm<FormValues>({
+    resolver: zodResolver(
+      isEdit
+        ? schema
+        : schema.extend({ password: z.string().min(1, t('common.required')) }),
+    ),
+    defaultValues: {
+      username: '',
+      password: '',
+      name: { ARM: '', ENG: '', RUS: '' },
+      role: 'admin',
+      isBlocked: false,
+      description: '',
+    },
+  });
+
+  const { reset, register, handleSubmit, formState: { errors } } = methods;
+
+  React.useEffect(() => {
+    if (existing) {
+      reset({
+        username: existing.username,
+        password: '', // per spec: never prefill password
+        name: existing.name,
+        role: existing.role,
+        isBlocked: existing.isBlocked,
+        description: existing.description ?? '',
+      });
+    }
+  }, [existing, reset]);
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.employees.all });
+    if (editId) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.employees.byId(editId) });
+    }
+  };
+
+  const createMutation = useMutation({
+    mutationFn: (values: FormValues) =>
+      createEmployee({ ...values, password: values.password }),
+    onSuccess: () => { invalidate(); onClose(); },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (values: FormValues) => {
+      // Omit password if empty (spec §2.5)
+      const cleaned = omitEmptyPasswords(values, ['password']);
+      return updateEmployee(existing!.id, {
+        ...cleaned,
+        id: (existing as Employee).id,
+        hash: (existing as Employee).hash,
+      } as Parameters<typeof updateEmployee>[1]);
+    },
+    onSuccess: () => { invalidate(); onClose(); },
+  });
+
+  const onSubmit = (values: FormValues) => {
+    if (isEdit) updateMutation.mutate(values);
+    else createMutation.mutate(values);
+  };
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
+  const mutationError = createMutation.error || updateMutation.error;
+
+  const roleOptions = [
+    { value: 'admin', label: t('employees.admin') },
+    { value: 'superadmin', label: t('employees.superadmin') },
+  ];
+
+  return (
+    <Modal
+      isOpen
+      onClose={onClose}
+      title={isEdit ? t('employees.editTitle') : t('employees.createTitle')}
+      size="lg"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={isPending}>
+            {t('common.cancel')}
+          </Button>
+          <Button type="submit" form="employee-form" loading={isPending}>
+            {t('common.save')}
+          </Button>
+        </>
+      }
+    >
+      {isEdit && loadingItem ? (
+        <div className="flex justify-center py-8"><Spinner /></div>
+      ) : (
+        <FormProvider {...methods}>
+          <form
+            id="employee-form"
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-4"
+            noValidate
+          >
+            <Input
+              id="emp-username"
+              label={t('employees.username')}
+              error={errors.username?.message}
+              {...register('username')}
+            />
+
+            <PasswordField
+              name="password"
+              label={t('employees.password')}
+              hint={isEdit ? t('employees.passwordHint') : undefined}
+              required={!isEdit}
+            />
+
+            <TranslationEditor fieldName="name" label={t('common.name')} />
+
+            <Select
+              id="emp-role"
+              label={t('employees.role')}
+              options={roleOptions}
+              error={errors.role?.message}
+              {...register('role')}
+            />
+
+            <Textarea
+              label={t('common.description')}
+              error={errors.description?.message}
+              {...register('description')}
+            />
+
+            <Checkbox
+              label={t('employees.isBlocked')}
+              {...register('isBlocked')}
+            />
+
+            {mutationError && (
+              <p className="text-sm text-red-600">{t('common.errorOccurred')}</p>
+            )}
+          </form>
+        </FormProvider>
+      )}
+    </Modal>
+  );
+}
