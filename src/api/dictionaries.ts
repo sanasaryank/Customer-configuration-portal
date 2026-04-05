@@ -1,4 +1,4 @@
-import { get, post, put, del } from './client';
+import { get, post, put } from './client';
 import { DICT_ENDPOINT_MAP } from '../constants/endpoints';
 import type {
   DictionaryItem,
@@ -11,7 +11,9 @@ import type {
 export async function getDictionary(
   key: DictionaryKey,
 ): Promise<DictionaryListItem[]> {
-  return get<DictionaryListItem[]>(DICT_ENDPOINT_MAP[key]);
+  const result = await get<unknown>(DICT_ENDPOINT_MAP[key]);
+  if (Array.isArray(result)) return result as DictionaryListItem[];
+  return [];
 }
 
 export async function getDictionaryItem(
@@ -36,9 +38,4 @@ export async function updateDictionaryItem(
   return put<DictionaryItem>(`${DICT_ENDPOINT_MAP[key]}/${id}`, payload);
 }
 
-export async function deleteDictionaryItem(
-  key: DictionaryKey,
-  id: string,
-): Promise<void> {
-  return del(`${DICT_ENDPOINT_MAP[key]}/${id}`);
-}
+

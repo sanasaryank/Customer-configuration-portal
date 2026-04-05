@@ -22,7 +22,7 @@ export function GeneralInfoTab() {
   const { data: groups = [] } = useQuery({ queryKey: queryKeys.dict('customerGroups'), queryFn: () => getDictionary('customerGroups') });
 
   // Map employees to id/name shape expected by DictionarySelect
-  const employeeItems = employees.map((e) => ({ id: e.id, name: e.name }));
+  const employeeItems = Array.isArray(employees) ? employees.map((e) => ({ id: e.id, name: e.name })) : [];
 
   return (
     <div className="space-y-4">

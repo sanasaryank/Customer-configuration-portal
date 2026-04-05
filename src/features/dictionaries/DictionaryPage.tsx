@@ -1,9 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   getDictionary,
-  deleteDictionaryItem,
   updateDictionaryItem,
   getDictionaryItem,
 } from '../../api/dictionaries';
@@ -11,16 +10,20 @@ import { queryKeys } from '../../queryKeys';
 import type { DictionaryKey, DictionaryListItem } from '../../types/dictionary';
 import { useAuth } from '../../providers/AuthProvider';
 import { useListOperations } from '../../hooks/useListOperations';
-import { useConfirmDialog } from '../../hooks/useConfirmDialog';
+import type { FilterField } from '../../hooks/useListOperations';
+import { useFilterValues, useRegisterFilterOptions } from '../../providers/FilterProvider';
 import { resolveTranslation } from '../../utils/translation';
+import { extractTranslation } from '../../utils/translation';
+import { buildLookupMap } from '../../utils/lookup';
 import { Table } from '../../components/ui/Table';
 import type { TableColumn } from '../../components/ui/Table';
-import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Pagination } from '../../components/ui/Pagination';
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Spinner';
+import { RowActions, IconEdit, IconLock, IconUnlock, IconHistory } from '../../components/ui/RowActions';
 import DictionaryModal from './DictionaryModal';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../constants/routes';
 
 const DICT_TITLE_KEYS: Record<DictionaryKey, string> = {
   integrationTypes: 'nav.integrationTypes',
@@ -31,6 +34,33 @@ const DICT_TITLE_KEYS: Record<DictionaryKey, string> = {
   productGroups: 'nav.productGroups',
   customerGroups: 'nav.customerGroups',
   customerStatus: 'nav.customerStatus',
+  licenseTypes: 'nav.licenseTypes',
+  countries: 'nav.countries',
+  cities: 'nav.cities',
+  districts: 'nav.districts',
+};
+
+/** Config for geo entities that have a required parent foreign key */
+interface GeoParentConfig {
+  parentKey: DictionaryKey;
+  parentField: string;
+  parentLabelKey: string;
+  columnLabelKey: string;
+}
+
+const GEO_PARENT_CONFIG: Partial<Record<DictionaryKey, GeoParentConfig>> = {
+  cities: {
+    parentKey: 'countries',
+    parentField: 'countryId',
+    parentLabelKey: 'cities.country',
+    columnLabelKey: 'cities.country',
+  },
+  districts: {
+    parentKey: 'cities',
+    parentField: 'cityId',
+    parentLabelKey: 'districts.city',
+    columnLabelKey: 'districts.city',
+  },
 };
 
 interface DictionaryPageProps {
@@ -41,22 +71,28 @@ export default function DictionaryPage({ dictKey }: DictionaryPageProps) {
   const { t } = useTranslation();
   const { lang } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [modalEditId, setModalEditId] = useState<string | null | undefined>(
     undefined,
-  ); // undefined = closed, null = create, string = edit id
-  const confirmDialog = useConfirmDialog();
+  );
+  const filterValues = useFilterValues();
+  const geoConfig = GEO_PARENT_CONFIG[dictKey];
 
   const { data = [], isLoading } = useQuery({
     queryKey: queryKeys.dict(dictKey),
     queryFn: () => getDictionary(dictKey),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteDictionaryItem(dictKey, id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.dict(dictKey) });
-    },
+  // Load parent list for geo entities that need parent column
+  const { data: parentData = [] } = useQuery({
+    queryKey: queryKeys.dict(geoConfig?.parentKey ?? 'countries'),
+    queryFn: () => getDictionary(geoConfig!.parentKey),
+    enabled: !!geoConfig,
   });
+  const parentMap = React.useMemo(
+    () => buildLookupMap(parentData, lang),
+    [parentData, lang],
+  );
 
   const blockMutation = useMutation({
     mutationFn: async ({
@@ -77,12 +113,63 @@ export default function DictionaryPage({ dictKey }: DictionaryPageProps) {
     },
   });
 
+  // Register parent options for geo select dropdowns (countryId / cityId)
+  const parentOptions = useMemo(
+    () => parentData.map((p) => ({ value: p.id, label: resolveTranslation(p.name, lang) })),
+    [parentData, lang],
+  );
+  // Hook must always be called; use parentField key or empty string for non-geo
+  const parentFilterKey = geoConfig?.parentField ?? '';
+  useRegisterFilterOptions(parentFilterKey, parentOptions);
+
+  const filterFields = useMemo<FilterField<DictionaryListItem>[]>(() => {
+    const fields: FilterField<DictionaryListItem>[] = [
+      { key: 'name',      extract: (item) => extractTranslation(item.name, lang) },
+      { key: 'isBlocked', extract: (item) => item.isBlocked ? 'blocked' : 'active', matchMode: 'exact' },
+    ];
+    if (geoConfig) {
+      fields.unshift({
+        key: geoConfig.parentField,
+        extract: (item) => {
+          const parentId = (item as unknown as Record<string, unknown>)[geoConfig.parentField];
+          return typeof parentId === 'string' ? parentId : '';
+        },
+        matchMode: 'exact',
+      });
+    }
+    return fields;
+  }, [lang, geoConfig]);
+
+  const sortFields = useMemo<Record<string, (item: DictionaryListItem) => string>>(() => {
+    const fields: Record<string, (item: DictionaryListItem) => string> = {
+      id: (item) => item.id,
+      name: (item) => resolveTranslation(item.name, lang),
+      isBlocked: (item) => String(item.isBlocked),
+    };
+    if (geoConfig) {
+      fields[geoConfig.parentField] = (item) => {
+        const parentId = (item as unknown as Record<string, unknown>)[geoConfig.parentField];
+        return typeof parentId === 'string' ? (parentMap.get(parentId) ?? '') : '';
+      };
+    }
+    return fields;
+  }, [lang, geoConfig, parentMap]);
+
   const listOps = useListOperations<DictionaryListItem>({
     data,
-    searchFields: (item) => [
-      resolveTranslation(item.name, lang),
-      item.description ?? '',
-    ],
+    searchFields: (item) => {
+      const base = [resolveTranslation(item.name, lang)];
+      if (geoConfig) {
+        const parentId = (item as unknown as Record<string, unknown>)[geoConfig.parentField];
+        if (typeof parentId === 'string') {
+          base.push(parentMap.get(parentId) ?? '');
+        }
+      }
+      return base;
+    },
+    filterFields,
+    externalFilters: filterValues,
+    sortFields,
   });
 
   const handleSort = useCallback(
@@ -98,13 +185,17 @@ export default function DictionaryPage({ dictKey }: DictionaryPageProps) {
     [listOps],
   );
 
-  const handleDelete = (id: string) => {
-    confirmDialog.requestConfirm(async () => {
-      await deleteMutation.mutateAsync(id);
-    });
-  };
-
   const columns: TableColumn<DictionaryListItem>[] = [
+    { key: 'id', header: t('common.id'), sortable: true, render: (row) => row.id },
+    ...(geoConfig ? [{
+      key: geoConfig.parentField,
+      header: t(geoConfig.columnLabelKey),
+      sortable: true,
+      render: (row: DictionaryListItem) => {
+        const parentId = (row as unknown as Record<string, unknown>)[geoConfig.parentField];
+        return typeof parentId === 'string' ? (parentMap.get(parentId) ?? parentId) : '—';
+      },
+    }] : []),
     {
       key: 'name',
       header: t('common.name'),
@@ -112,50 +203,14 @@ export default function DictionaryPage({ dictKey }: DictionaryPageProps) {
       render: (row) => resolveTranslation(row.name, lang),
     },
     {
-      key: 'description',
-      header: t('common.description'),
-      render: (row) => row.description || '—',
-    },
-    {
-      key: 'isBlocked',
-      header: t('common.status'),
-      render: (row) =>
-        row.isBlocked ? (
-          <Badge variant="danger">{t('common.blocked')}</Badge>
-        ) : (
-          <Badge variant="success">{t('common.active')}</Badge>
-        ),
-    },
-    {
       key: 'actions',
       header: t('common.actions'),
       render: (row) => (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setModalEditId(row.id)}
-          >
-            {t('common.edit')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() =>
-              blockMutation.mutate({ id: row.id, isBlocked: !row.isBlocked })
-            }
-          >
-            {row.isBlocked ? t('common.unblock') : t('common.block')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDelete(row.id)}
-            className="text-red-600 hover:text-red-800"
-          >
-            {t('common.delete')}
-          </Button>
-        </div>
+        <RowActions actions={[
+          { key: 'edit',    icon: <IconEdit />,                                   title: t('common.edit'),    onClick: () => setModalEditId(row.id) },
+          { key: 'block',   icon: row.isBlocked ? <IconLock /> : <IconUnlock />, title: row.isBlocked ? t('common.unblock') : t('common.block'), variant: row.isBlocked ? 'warning' : 'default', onClick: () => blockMutation.mutate({ id: row.id, isBlocked: !row.isBlocked }) },
+          { key: 'history', icon: <IconHistory />,                                title: t('common.history'), onClick: () => navigate(`${ROUTES.HISTORY}?objectId=${row.id}`) },
+        ]} />
       ),
     },
   ];
@@ -170,17 +225,6 @@ export default function DictionaryPage({ dictKey }: DictionaryPageProps) {
         <Button onClick={() => setModalEditId(null)}>
           {t('common.create')}
         </Button>
-      </div>
-
-      {/* Search */}
-      <div className="max-w-sm">
-        <input
-          type="text"
-          className="form-input"
-          placeholder={t('common.search')}
-          value={listOps.search}
-          onChange={(e) => listOps.setSearch(e.target.value)}
-        />
       </div>
 
       {/* Table */}
@@ -216,16 +260,11 @@ export default function DictionaryPage({ dictKey }: DictionaryPageProps) {
           dictKey={dictKey}
           editId={modalEditId}
           onClose={() => setModalEditId(undefined)}
+          parentKey={geoConfig?.parentKey}
+          parentField={geoConfig?.parentField}
+          parentLabel={geoConfig?.parentLabelKey}
         />
       )}
-
-      {/* Delete confirm */}
-      <ConfirmDialog
-        isOpen={confirmDialog.isOpen}
-        onClose={confirmDialog.close}
-        onConfirm={confirmDialog.confirm}
-        loading={deleteMutation.isPending}
-      />
     </div>
   );
 }

@@ -34,3 +34,16 @@ export function resolveTranslation(
 export function emptyTranslation(): Translation {
   return { ARM: '', ENG: '', RUS: '' };
 }
+
+/**
+ * Extract a translation for a specific language WITHOUT fallback.
+ * Use this for filter/search operations so that searching in e.g. ENG
+ * only matches English text, not Russian or Armenian fallbacks.
+ */
+export function extractTranslation(
+  translation: Translation | null | undefined,
+  lang: LangCode,
+): string {
+  if (!translation) return '';
+  return translation[lang] ?? '';
+}

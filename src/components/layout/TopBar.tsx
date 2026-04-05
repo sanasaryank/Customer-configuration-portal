@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../providers/AuthProvider';
+import { useFilterContext } from '../../providers/FilterProvider';
 import { logout } from '../../api/auth';
 import { LANGUAGES, LANG_TO_I18N } from '../../constants/languages';
 import { ROUTES } from '../../constants/routes';
@@ -17,6 +18,7 @@ interface TopBarProps {
 export function TopBar({ onMenuToggle }: TopBarProps) {
   const { t, i18n } = useTranslation();
   const { user, setUser, lang, setLang } = useAuth();
+  const { togglePanel, isOpen } = useFilterContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -51,8 +53,25 @@ export function TopBar({ onMenuToggle }: TopBarProps) {
         </svg>
       </button>
 
-      {/* Right: lang selector + user info + logout */}
+      {/* Right: filter toggle + lang selector + user info + logout */}
       <div className="flex items-center gap-3">
+        {/* Filter/Search panel toggle */}
+        <button
+          type="button"
+          onClick={togglePanel}
+          className={`p-1.5 rounded-md transition-colors ${
+            isOpen
+              ? 'text-primary-600 bg-primary-50 hover:bg-primary-100'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+          }`}
+          aria-label={t('common.filters')}
+          title={t('common.filters')}
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+          </svg>
+        </button>
         {/* Language selector */}
         <div className="relative">
           <select

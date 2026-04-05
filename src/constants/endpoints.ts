@@ -9,11 +9,13 @@ export const ENDPOINTS = {
 
   // Main entities
   EMPLOYEES: '/employees',
-  COUNTRIES: '/countries',
-  CITIES: '/cities',
-  DISTRICTS: '/districts',
+  COUNTRIES: '/dictionary/countries',
+  CITIES: '/dictionary/cities',
+  DISTRICTS: '/dictionary/districts',
   PRODUCTS: '/products',
   CUSTOMERS: '/customers',
+  CUSTOMERS_MOVE_LICENSE: '/customers/moveLicense',
+  CUSTOMERS_RENEW_LICENSE: '/customers/renewLicense',
 
   // Working days
   WORKING_DAYS: '/workingDays',
@@ -31,6 +33,10 @@ export const ENDPOINTS = {
   DICT_PRODUCT_GROUPS: '/dictionary/productGroups',
   DICT_CUSTOMER_GROUPS: '/dictionary/customerGroups',
   DICT_CUSTOMER_STATUS: '/dictionary/customerStatus',
+  DICT_LICENSE_TYPES: '/dictionary/licenseTypes',
+  DICT_COUNTRIES: '/dictionary/countries',
+  DICT_CITIES: '/dictionary/cities',
+  DICT_DISTRICTS: '/dictionary/districts',
 } as const;
 
 import type { DictionaryKey } from '../types/dictionary';
@@ -44,4 +50,8 @@ export const DICT_ENDPOINT_MAP: Record<DictionaryKey, string> = {
   productGroups: ENDPOINTS.DICT_PRODUCT_GROUPS,
   customerGroups: ENDPOINTS.DICT_CUSTOMER_GROUPS,
   customerStatus: ENDPOINTS.DICT_CUSTOMER_STATUS,
+  licenseTypes: ENDPOINTS.DICT_LICENSE_TYPES,
+  countries: ENDPOINTS.DICT_COUNTRIES,
+  cities: ENDPOINTS.DICT_CITIES,
+  districts: ENDPOINTS.DICT_DISTRICTS,
 };

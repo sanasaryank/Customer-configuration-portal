@@ -21,6 +21,7 @@ export interface CustomerGeneralInfo {
   tin: string;
   bankAccount: string;
   description: string;
+  isBlocked: boolean;
 }
 
 export interface CustomerContactInfo {
@@ -40,20 +41,58 @@ export interface CustomerConnectionInfo {
   username: string;
 }
 
+// Write form of connection info (includes write-only passwords)
+export interface CustomerConnectionInfoWrite extends CustomerConnectionInfo {
+  serverPassword?: string;
+  password?: string;
+}
+
+// Form shape of connection info (write-only passwords always present)
+export interface CustomerFormConnectionInfo extends CustomerConnectionInfo {
+  serverPassword: string;
+  password: string;
+}
+
 // licenseData is a dynamic object whose keys match licenseTemplate[].name
 export type LicenseData = Record<string, JsonValue>;
 
 export interface CustomerLicenseProduct {
   productId: string;
+  licenseTypeId: string;
+  hardwareKey: string;
   licenseKey: string;
   licenseData: LicenseData;
-  movedFrom: string;
-  movedTo: string;
+  connectionInfo: CustomerConnectionInfo;
+}
+
+export interface CustomerLicenseProductWrite {
+  productId: string;
+  licenseTypeId: string;
+  hardwareKey: string;
+  licenseKey: string;
+  licenseData: LicenseData;
+  connectionInfo: CustomerConnectionInfoWrite;
+}
+
+export interface CustomerLicenseProductForm {
+  productId: string;
+  licenseTypeId: string;
+  hardwareKey: string;
+  licenseKey: string;
+  licenseData: LicenseData;
+  connectionInfo: CustomerFormConnectionInfo;
 }
 
 export interface CustomerLicenseInfo {
-  hardwareKey: string;
   products: CustomerLicenseProduct[];
+}
+
+export interface CustomerLicenseInfoWrite {
+  products: CustomerLicenseProductWrite[];
+}
+
+export interface CustomerLicenseInfoForm {
+  products: CustomerLicenseProductForm[];
 }
 
 // Customer user as returned by GET (no password)
@@ -70,13 +109,11 @@ export interface CustomerUser {
 
 export interface CustomerListItem {
   id: string;
+  lastUpdated: number;
   generalInfo: CustomerGeneralInfo;
   contactInfo: CustomerContactInfo;
-  connectionInfo: CustomerConnectionInfo;
-  products: string[];
   licenseInfo: CustomerLicenseInfo;
   users: CustomerUser[];
-  isBlocked: boolean;
 }
 
 export interface Customer extends CustomerListItem {
@@ -84,12 +121,6 @@ export interface Customer extends CustomerListItem {
 }
 
 // ----- Write payloads -----
-
-// Write form of connection info (includes write-only passwords)
-export interface CustomerConnectionInfoWrite extends CustomerConnectionInfo {
-  serverPassword?: string;
-  password?: string;
-}
 
 // Write form of customer user (includes write-only password)
 export interface CustomerUserWrite {
@@ -105,11 +136,8 @@ export interface CustomerUserWrite {
 export interface CustomerCreatePayload {
   generalInfo: CustomerGeneralInfo;
   contactInfo: CustomerContactInfo;
-  connectionInfo: CustomerConnectionInfoWrite;
-  products: string[];
-  licenseInfo: CustomerLicenseInfo;
+  licenseInfo: CustomerLicenseInfoWrite;
   users: CustomerUserWrite[];
-  isBlocked: boolean;
 }
 
 export interface CustomerUpdatePayload extends CustomerCreatePayload {
@@ -119,16 +147,6 @@ export interface CustomerUpdatePayload extends CustomerCreatePayload {
 
 // ----- Form values -----
 // Used in react-hook-form — includes write-only password fields
-
-export interface CustomerFormConnectionInfo {
-  connectionTypeId: string;
-  host: string;
-  port: number;
-  serverUsername: string;
-  serverPassword: string; // write-only, empty by default
-  username: string;
-  password: string; // write-only, empty by default
-}
 
 export interface CustomerFormUser {
   id: string; // empty string for new users
@@ -143,9 +161,6 @@ export interface CustomerFormUser {
 export interface CustomerFormValues {
   generalInfo: CustomerGeneralInfo;
   contactInfo: CustomerContactInfo;
-  connectionInfo: CustomerFormConnectionInfo;
-  products: string[];
-  licenseInfo: CustomerLicenseInfo;
+  licenseInfo: CustomerLicenseInfoForm;
   users: CustomerFormUser[];
-  isBlocked: boolean;
 }

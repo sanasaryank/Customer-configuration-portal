@@ -14,17 +14,19 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ options, error, label, placeholder, className, id, ...rest }, ref) => {
+  ({ options, error, label, placeholder, className, id, required, ...rest }, ref) => {
     return (
       <div className="w-full">
         {label && (
           <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
             {label}
+            {required && <span className="text-red-500 ml-0.5">*</span>}
           </label>
         )}
         <select
           ref={ref}
           id={id}
+          required={required}
           className={clsx(
             'form-select',
             error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : '',

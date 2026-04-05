@@ -17,5 +17,5 @@ export async function logout(): Promise<void> {
 
 // GET /me
 export async function getMe(): Promise<CurrentUser> {
-  return get<CurrentUser>(ENDPOINTS.ME);
+  return get<CurrentUser>(ENDPOINTS.ME, true);
 }

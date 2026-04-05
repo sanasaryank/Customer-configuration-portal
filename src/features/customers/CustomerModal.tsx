@@ -1,31 +1,29 @@
 import { useEffect } from 'react';
 import React from 'react';
-import { useForm, FormProvider, useWatch } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getCustomer, createCustomer, updateCustomer } from '../../api/customers';
-import { getProducts } from '../../api/products';
 import { queryKeys } from '../../queryKeys';
 import type {
   Customer,
   CustomerFormValues,
   CustomerCreatePayload,
   CustomerUpdatePayload,
-  CustomerFormConnectionInfo,
   CustomerFormUser,
 } from '../../types/customer';
-import { omitEmptyPasswordsNested, omitEmptyPasswords } from '../../utils/password';
+import { omitEmptyPasswords } from '../../utils/password';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
+import { ErrorBanner } from '../../components/ui/ErrorBanner';
+import { useFormError } from '../../hooks/useFormError';
 import { Spinner } from '../../components/ui/Spinner';
 import { Tabs, TabList, TabTrigger, TabPanel } from '../../components/ui/Tabs';
 import { GeneralInfoTab } from './tabs/GeneralInfoTab';
 import { ContactInfoTab } from './tabs/ContactInfoTab';
-import { ConnectionInfoTab } from './tabs/ConnectionInfoTab';
-import { ProductsTab } from './tabs/ProductsTab';
 import { LicenseInfoTab } from './tabs/LicenseInfoTab';
 import { UsersTab } from './tabs/UsersTab';
 
@@ -45,6 +43,7 @@ const schema = z.object({
     tin: z.string(),
     bankAccount: z.string(),
     description: z.string(),
+    isBlocked: z.boolean(),
   }),
   contactInfo: z.object({
     address: z.string(),
@@ -53,31 +52,29 @@ const schema = z.object({
       countryId: z.string(),
       cityId: z.string(),
       districtId: z.string(),
-      lat: z.number(),
-      lng: z.number(),
+      lat: z.coerce.number().catch(0),
+      lng: z.coerce.number().catch(0),
     }),
     phone: z.string(),
     email: z.string(),
   }),
-  connectionInfo: z.object({
-    connectionTypeId: z.string(),
-    host: z.string(),
-    port: z.number(),
-    serverUsername: z.string(),
-    serverPassword: z.string(), // write-only, empty by default
-    username: z.string(),
-    password: z.string(), // write-only, empty by default
-  }),
-  products: z.array(z.string()),
   licenseInfo: z.object({
-    hardwareKey: z.string(),
     products: z.array(
       z.object({
         productId: z.string(),
+        licenseTypeId: z.string(),
+        hardwareKey: z.string(),
         licenseKey: z.string(),
         licenseData: z.record(z.unknown()),
-        movedFrom: z.string(),
-        movedTo: z.string(),
+        connectionInfo: z.object({
+          connectionTypeId: z.string(),
+          host: z.string(),
+          port: z.coerce.number().catch(0),
+          serverUsername: z.string(),
+          serverPassword: z.string(),
+          username: z.string(),
+          password: z.string(),
+        }),
       }),
     ),
   }),
@@ -92,7 +89,6 @@ const schema = z.object({
       isBlocked: z.boolean(),
     }),
   ),
-  isBlocked: z.boolean(),
 });
 
 // ---- Default values ----
@@ -110,6 +106,7 @@ function defaultFormValues(): CustomerFormValues {
       tin: '',
       bankAccount: '',
       description: '',
+      isBlocked: false,
     },
     contactInfo: {
       address: '',
@@ -118,30 +115,21 @@ function defaultFormValues(): CustomerFormValues {
       phone: '',
       email: '',
     },
-    connectionInfo: {
-      connectionTypeId: '',
-      host: '',
-      port: 0,
-      serverUsername: '',
-      serverPassword: '',
-      username: '',
-      password: '',
-    },
-    products: [],
-    licenseInfo: { hardwareKey: '', products: [] },
+    licenseInfo: { products: [] },
     users: [],
-    isBlocked: false,
   };
 }
 
 // ---- Build write payload from form values ----
 
 function buildCreatePayload(values: CustomerFormValues): CustomerCreatePayload {
-  // Omit empty write-only passwords from connectionInfo (spec §2.5)
-  const rawConn = { ...values.connectionInfo } as Record<string, unknown>;
-  if (!rawConn['serverPassword']) delete rawConn['serverPassword'];
-  if (!rawConn['password']) delete rawConn['password'];
-  const connectionInfoWrite = rawConn as unknown as CustomerFormConnectionInfo;
+  // Per-product: omit empty write-only passwords from each connectionInfo
+  const products = values.licenseInfo.products.map((p) => {
+    const conn = { ...p.connectionInfo } as Record<string, unknown>;
+    if (!conn['serverPassword']) delete conn['serverPassword'];
+    if (!conn['password']) delete conn['password'];
+    return { ...p, connectionInfo: conn };
+  }) as unknown as CustomerCreatePayload['licenseInfo']['products'];
 
   // Omit empty passwords from users
   const users = values.users.map((u: CustomerFormUser) => {
@@ -152,11 +140,8 @@ function buildCreatePayload(values: CustomerFormValues): CustomerCreatePayload {
   return {
     generalInfo: values.generalInfo,
     contactInfo: values.contactInfo,
-    connectionInfo: connectionInfoWrite,
-    products: values.products,
-    licenseInfo: values.licenseInfo,
+    licenseInfo: { products },
     users,
-    isBlocked: values.isBlocked,
   };
 }
 
@@ -186,16 +171,6 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
     enabled: isEdit,
   });
 
-  const { data: allProducts = [] } = useQuery({
-    queryKey: queryKeys.products.all,
-    queryFn: getProducts,
-  });
-
-  const productMap = React.useMemo(
-    () => new Map(allProducts.map((p) => [p.id, p])),
-    [allProducts],
-  );
-
   // useForm with complex nested Zod schema: use type cast to avoid TS2589 deep instantiation
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const methods = (useForm as any)({
@@ -203,53 +178,32 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
     defaultValues: defaultFormValues(),
   }) as ReturnType<typeof useForm<CustomerFormValues>>;
 
-  const { reset, register, handleSubmit, control, setValue } = methods;
+  const { reset, register, handleSubmit, control } = methods;
 
   // Populate form from existing data (edit mode)
   useEffect(() => {
     if (existing) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       reset({
         generalInfo: existing.generalInfo,
         contactInfo: existing.contactInfo,
-        connectionInfo: {
-          ...existing.connectionInfo,
-          serverPassword: '', // never prefill write-only
-          password: '',       // never prefill write-only
+        licenseInfo: {
+          products: (Array.isArray(existing.licenseInfo?.products) ? existing.licenseInfo.products : []).map((p) => ({
+            ...p,
+            connectionInfo: {
+              ...p.connectionInfo,
+              serverPassword: '', // never prefill write-only
+              password: '',       // never prefill write-only
+            },
+          })),
         },
-        products: existing.products ?? [],
-        licenseInfo: existing.licenseInfo ?? { hardwareKey: '', products: [] },
-        users: (existing.users ?? []).map((u) => ({
+        users: (Array.isArray(existing.users) ? existing.users : []).map((u) => ({
           ...u,
           password: '', // never prefill write-only
         })),
-        isBlocked: existing.isBlocked,
-      });
+      } as any);
     }
   }, [existing, reset]);
-
-  // Watch products to auto-add license blocks when a new product with licenseTemplate is selected
-  const watchedProducts = useWatch({ control, name: 'products' }) ?? [];
-  const watchedLicenseProducts = useWatch({ control, name: 'licenseInfo.products' }) ?? [];
-
-  useEffect(() => {
-    for (const productId of watchedProducts) {
-      const product = productMap.get(productId);
-      if (!product?.licenseTemplate?.length) continue;
-      const alreadyHas = watchedLicenseProducts.some((lp) => lp.productId === productId);
-      if (!alreadyHas) {
-        const newBlock = {
-          productId,
-          licenseKey: '',
-          licenseData: {},
-          movedFrom: '',
-          movedTo: '',
-        };
-        setValue('licenseInfo.products', [...watchedLicenseProducts, newBlock]);
-      }
-    }
-    // Note: per spec §5.7.5, we do NOT remove blocks when product is removed.
-    // Removed products show as disabled in LicenseInfoTab.
-  }, [watchedProducts, watchedLicenseProducts, productMap, setValue]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.customers.all });
@@ -269,18 +223,18 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
   });
 
   const onSubmit = (values: CustomerFormValues) => {
+    clearValidationError();
     if (isEdit) updateMutation.mutate(values);
     else createMutation.mutate(values);
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
   const mutationError = createMutation.error || updateMutation.error;
+  const { errorMessage, onValidationError, clearValidationError } = useFormError(mutationError);
 
   const TABS = [
     { value: 'general', label: t('customers.generalInfo') },
     { value: 'contact', label: t('customers.contactInfo') },
-    { value: 'connection', label: t('customers.connectionInfo') },
-    { value: 'products', label: t('customers.products') },
     { value: 'license', label: t('customers.licenseInfo') },
     { value: 'users', label: t('customers.users') },
   ];
@@ -295,7 +249,7 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
         <>
           <Checkbox
             label={t('common.blocked')}
-            {...register('isBlocked')}
+            {...register('generalInfo.isBlocked')}
           />
           <div className="flex-1" />
           <Button variant="secondary" onClick={onClose} disabled={isPending}>
@@ -313,10 +267,10 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
         <FormProvider {...methods}>
           <form
             id="customer-form"
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(onSubmit, onValidationError)}
             noValidate
           >
-            <Tabs defaultTab="general">
+            <Tabs defaultTab="general" orientation="vertical">
               <TabList>
                 {TABS.map((tab) => (
                   <TabTrigger key={tab.value} value={tab.value}>
@@ -331,23 +285,15 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
               <TabPanel value="contact">
                 <ContactInfoTab />
               </TabPanel>
-              <TabPanel value="connection">
-                <ConnectionInfoTab isEdit={isEdit} />
-              </TabPanel>
-              <TabPanel value="products">
-                <ProductsTab />
-              </TabPanel>
               <TabPanel value="license">
-                <LicenseInfoTab />
+                <LicenseInfoTab isEdit={isEdit} />
               </TabPanel>
               <TabPanel value="users">
                 <UsersTab isEdit={isEdit} />
               </TabPanel>
             </Tabs>
 
-            {mutationError && (
-              <p className="mt-3 text-sm text-red-600">{t('common.errorOccurred')}</p>
-            )}
+            <ErrorBanner message={errorMessage} />
           </form>
         </FormProvider>
       )}

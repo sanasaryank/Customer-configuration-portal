@@ -1,4 +1,4 @@
-import { get, post, put, del } from './client';
+import { get, post, put } from './client';
 import { ENDPOINTS } from '../constants/endpoints';
 import type {
   Customer,
@@ -8,7 +8,9 @@ import type {
 } from '../types/customer';
 
 export async function getCustomers(): Promise<CustomerListItem[]> {
-  return get<CustomerListItem[]>(ENDPOINTS.CUSTOMERS);
+  const result = await get<unknown>(ENDPOINTS.CUSTOMERS);
+  if (Array.isArray(result)) return result as CustomerListItem[];
+  return [];
 }
 
 export async function getCustomer(id: string): Promise<Customer> {
@@ -28,6 +30,18 @@ export async function updateCustomer(
   return put<Customer>(`${ENDPOINTS.CUSTOMERS}/${id}`, payload);
 }
 
-export async function deleteCustomer(id: string): Promise<void> {
-  return del(`${ENDPOINTS.CUSTOMERS}/${id}`);
+export async function moveLicense(srcId: string, dstId: string): Promise<void> {
+  return post<void>(`${ENDPOINTS.CUSTOMERS_MOVE_LICENSE}/${dstId}`, { srcId });
 }
+
+export async function renewLicense(
+  customerId: string,
+  productIds: string[],
+): Promise<Customer> {
+  return post<Customer>(
+    `${ENDPOINTS.CUSTOMERS_RENEW_LICENSE}/${customerId}`,
+    productIds.map((productId) => ({ productId })),
+  );
+}
+
+

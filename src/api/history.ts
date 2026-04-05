@@ -4,14 +4,18 @@ import type { HistoryListItem, HistoryDetail } from '../types/history';
 
 // GET /history — all history items
 export async function getAllHistory(): Promise<HistoryListItem[]> {
-  return get<HistoryListItem[]>(ENDPOINTS.HISTORY);
+  const result = await get<unknown>(ENDPOINTS.HISTORY);
+  if (Array.isArray(result)) return result as HistoryListItem[];
+  return [];
 }
 
 // GET /history/{objectId} — history for one object
 export async function getHistoryByObject(
   objectId: string,
 ): Promise<HistoryListItem[]> {
-  return get<HistoryListItem[]>(`${ENDPOINTS.HISTORY}/${objectId}`);
+  const result = await get<unknown>(`${ENDPOINTS.HISTORY}/${objectId}`);
+  if (Array.isArray(result)) return result as HistoryListItem[];
+  return [];
 }
 
 // GET /historyItem/{id} — diff array for a single history item

@@ -1,9 +1,7 @@
-// GET /workingDays response
-export interface WorkingDaysResponse {
-  dates: string[]; // YYYY-MM-DD strings
-}
+// GET /workingDays/{countryId} response — plain array of non-working day YYYY-MM-DD strings (holidays/days off)
+export type WorkingDaysResponse = string[];
 
-// POST /workingDays payload
+// POST /workingDays/{countryId} payload
 export interface WorkingDayPayload {
   date: string; // YYYY-MM-DD
   action: 'add' | 'remove';

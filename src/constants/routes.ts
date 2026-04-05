@@ -13,6 +13,7 @@ export const ROUTES = {
   PRODUCT_GROUPS: '/handbooks/productGroups',
   CUSTOMER_GROUPS: '/handbooks/customerGroups',
   CUSTOMER_STATUS: '/handbooks/customerStatus',
+  LICENSE_TYPES: '/handbooks/licenseTypes',
   COUNTRIES: '/handbooks/countries',
   CITIES: '/handbooks/cities',
   DISTRICTS: '/handbooks/districts',

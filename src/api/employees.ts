@@ -1,4 +1,4 @@
-import { get, post, put, del } from './client';
+import { get, post, put } from './client';
 import { ENDPOINTS } from '../constants/endpoints';
 import type {
   Employee,
@@ -8,7 +8,9 @@ import type {
 } from '../types/employee';
 
 export async function getEmployees(): Promise<EmployeeListItem[]> {
-  return get<EmployeeListItem[]>(ENDPOINTS.EMPLOYEES);
+  const result = await get<unknown>(ENDPOINTS.EMPLOYEES);
+  if (Array.isArray(result)) return result as EmployeeListItem[];
+  return [];
 }
 
 export async function getEmployee(id: string): Promise<Employee> {
@@ -28,6 +30,4 @@ export async function updateEmployee(
   return put<Employee>(`${ENDPOINTS.EMPLOYEES}/${id}`, payload);
 }
 
-export async function deleteEmployee(id: string): Promise<void> {
-  return del(`${ENDPOINTS.EMPLOYEES}/${id}`);
-}
+

@@ -35,4 +35,8 @@ export type DictionaryKey =
   | 'priceSegments'
   | 'productGroups'
   | 'customerGroups'
-  | 'customerStatus';
+  | 'customerStatus'
+  | 'licenseTypes'
+  | 'countries'
+  | 'cities'
+  | 'districts';

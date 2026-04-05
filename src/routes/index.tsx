@@ -16,16 +16,14 @@ const ProductsPage = lazy(() => import('../features/products/ProductsPage'));
 const HistoryPage = lazy(() => import('../features/history/HistoryPage'));
 const EmployeesPage = lazy(() => import('../features/employees/EmployeesPage'));
 const WorkingDaysPage = lazy(() => import('../features/workingDays/WorkingDaysPage'));
-const CountriesPage = lazy(() => import('../features/countries/CountriesPage'));
-const CitiesPage = lazy(() => import('../features/cities/CitiesPage'));
-const DistrictsPage = lazy(() => import('../features/districts/DistrictsPage'));
 const DictionaryPage = lazy(() => import('../features/dictionaries/DictionaryPage'));
 
 function Fallback() {
   return <FullPageSpinner />;
 }
 
-const router = createBrowserRouter([
+function buildRouter() {
+  return createBrowserRouter([
   {
     path: ROUTES.LOGIN,
     element: (
@@ -86,11 +84,12 @@ const router = createBrowserRouter([
               </Suspense>
             ),
           },
+          // Geo entities — handled via DictionaryPage with parent linking
           {
             path: ROUTES.COUNTRIES,
             element: (
               <Suspense fallback={<Fallback />}>
-                <CountriesPage />
+                <DictionaryPage key="countries" dictKey="countries" />
               </Suspense>
             ),
           },
@@ -98,7 +97,7 @@ const router = createBrowserRouter([
             path: ROUTES.CITIES,
             element: (
               <Suspense fallback={<Fallback />}>
-                <CitiesPage />
+                <DictionaryPage key="cities" dictKey="cities" />
               </Suspense>
             ),
           },
@@ -106,7 +105,7 @@ const router = createBrowserRouter([
             path: ROUTES.DISTRICTS,
             element: (
               <Suspense fallback={<Fallback />}>
-                <DistrictsPage />
+                <DictionaryPage key="districts" dictKey="districts" />
               </Suspense>
             ),
           },
@@ -115,7 +114,7 @@ const router = createBrowserRouter([
             path: ROUTES.INTEGRATION_TYPES,
             element: (
               <Suspense fallback={<Fallback />}>
-                <DictionaryPage dictKey="integrationTypes" />
+                <DictionaryPage key="integrationTypes" dictKey="integrationTypes" />
               </Suspense>
             ),
           },
@@ -123,7 +122,7 @@ const router = createBrowserRouter([
             path: ROUTES.RESTAURANT_TYPES,
             element: (
               <Suspense fallback={<Fallback />}>
-                <DictionaryPage dictKey="restaurantTypes" />
+                <DictionaryPage key="restaurantTypes" dictKey="restaurantTypes" />
               </Suspense>
             ),
           },
@@ -131,7 +130,7 @@ const router = createBrowserRouter([
             path: ROUTES.HOTEL_TYPES,
             element: (
               <Suspense fallback={<Fallback />}>
-                <DictionaryPage dictKey="hotelTypes" />
+                <DictionaryPage key="hotelTypes" dictKey="hotelTypes" />
               </Suspense>
             ),
           },
@@ -139,7 +138,7 @@ const router = createBrowserRouter([
             path: ROUTES.MENU_TYPES,
             element: (
               <Suspense fallback={<Fallback />}>
-                <DictionaryPage dictKey="menuTypes" />
+                <DictionaryPage key="menuTypes" dictKey="menuTypes" />
               </Suspense>
             ),
           },
@@ -147,7 +146,7 @@ const router = createBrowserRouter([
             path: ROUTES.PRICE_SEGMENTS,
             element: (
               <Suspense fallback={<Fallback />}>
-                <DictionaryPage dictKey="priceSegments" />
+                <DictionaryPage key="priceSegments" dictKey="priceSegments" />
               </Suspense>
             ),
           },
@@ -155,7 +154,7 @@ const router = createBrowserRouter([
             path: ROUTES.PRODUCT_GROUPS,
             element: (
               <Suspense fallback={<Fallback />}>
-                <DictionaryPage dictKey="productGroups" />
+                <DictionaryPage key="productGroups" dictKey="productGroups" />
               </Suspense>
             ),
           },
@@ -163,7 +162,7 @@ const router = createBrowserRouter([
             path: ROUTES.CUSTOMER_GROUPS,
             element: (
               <Suspense fallback={<Fallback />}>
-                <DictionaryPage dictKey="customerGroups" />
+                <DictionaryPage key="customerGroups" dictKey="customerGroups" />
               </Suspense>
             ),
           },
@@ -171,7 +170,15 @@ const router = createBrowserRouter([
             path: ROUTES.CUSTOMER_STATUS,
             element: (
               <Suspense fallback={<Fallback />}>
-                <DictionaryPage dictKey="customerStatus" />
+                <DictionaryPage key="customerStatus" dictKey="customerStatus" />
+              </Suspense>
+            ),
+          },
+          {
+            path: ROUTES.LICENSE_TYPES,
+            element: (
+              <Suspense fallback={<Fallback />}>
+                <DictionaryPage key="licenseTypes" dictKey="licenseTypes" />
               </Suspense>
             ),
           },
@@ -180,7 +187,9 @@ const router = createBrowserRouter([
     ],
   },
 ]);
+}
 
 export function AppRouter() {
+  const [router] = React.useState(buildRouter);
   return <RouterProvider router={router} />;
 }

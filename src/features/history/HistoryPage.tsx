@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -8,24 +8,29 @@ import { queryKeys } from '../../queryKeys';
 import type { HistoryListItem } from '../../types/history';
 import { useAuth } from '../../providers/AuthProvider';
 import { useListOperations } from '../../hooks/useListOperations';
-import { resolveTranslation } from '../../utils/translation';
+import type { FilterField } from '../../hooks/useListOperations';
 import { formatTimestamp } from '../../utils/timestamp';
+import { useFilterValues, useRegisterFilterOptions } from '../../providers/FilterProvider';
 import { Table } from '../../components/ui/Table';
 import type { TableColumn } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Pagination } from '../../components/ui/Pagination';
 import { Spinner } from '../../components/ui/Spinner';
+import { RowActions, IconView } from '../../components/ui/RowActions';
+import { useNavigate } from 'react-router-dom';
 import HistoryDetailModal from './HistoryDetailModal';
 
 export default function HistoryPage() {
   const { t } = useTranslation();
-  const { lang } = useAuth();
+  const { lang: _lang } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // Optional filter by objectId (passed via ?objectId=... from other pages)
   const objectIdFilter = searchParams.get('objectId') ?? null;
   const [detailId, setDetailId] = useState<number | null>(null);
+  const filterValues = useFilterValues();
 
   // Use objectId-scoped history if filter is active
   const { data = [], isLoading } = useQuery({
@@ -45,21 +50,44 @@ export default function HistoryPage() {
 
   const employeeMap = React.useMemo(() => {
     const map = new Map<string, string>();
+    if (!Array.isArray(employees)) return map;
     for (const emp of employees) {
       map.set(emp.id, emp.username);
     }
     return map;
   }, [employees]);
 
+  const usernameOptions = useMemo(
+    () => (Array.isArray(employees) ? employees : []).map((e) => ({ value: e.username, label: e.username })),
+    [employees],
+  );
+  useRegisterFilterOptions('username', usernameOptions);
+
+  const filterFields = useMemo<FilterField<HistoryListItem>[]>(() => [
+    { key: 'date',       extract: (item) => formatTimestamp(item.date) },
+    { key: 'username',   extract: (item) => employeeMap.get(item.userId) ?? item.userId, matchMode: 'exact' },
+    { key: 'objectType', extract: (item) => item.objectType },
+    { key: 'action',     extract: (item) => item.actionType,  matchMode: 'exact' },
+  ], [employeeMap]);
+
+  const sortFields = useMemo<Record<string, (item: HistoryListItem) => string>>(() => ({
+    date: (item) => String(item.date),
+    username: (item) => employeeMap.get(item.userId) ?? item.userId,
+    objectType: (item) => item.objectType,
+    action: (item) => item.actionType,
+  }), [employeeMap]);
+
   const listOps = useListOperations<HistoryListItem>({
     data,
     searchFields: (item) => [
       item.objectType,
-      item.objectId,
       item.actionType,
       employeeMap.get(item.userId) ?? item.userId,
     ],
     defaultSort: { key: 'date', direction: 'desc' },
+    filterFields,
+    externalFilters: filterValues,
+    sortFields,
   });
 
   const handleSort = useCallback((key: string) => {
@@ -87,31 +115,36 @@ export default function HistoryPage() {
       key: 'date',
       header: t('history.date'),
       sortable: true,
-      render: (row) => formatTimestamp(row.date), // seconds -> formatted
+      render: (row) => formatTimestamp(row.date),
     },
     {
-      key: 'userId',
+      key: 'username',
       header: t('history.user'),
+      sortable: true,
       render: (row) => employeeMap.get(row.userId) ?? row.userId,
     },
     {
-      key: 'actionType',
+      key: 'objectType',
+      header: t('history.objectType'),
+      sortable: true,
+    },
+    {
+      key: 'action',
       header: t('history.actionType'),
+      sortable: true,
       render: (row) => (
         <Badge variant={actionBadgeVariant(row.actionType)}>
           {actionLabel(row.actionType)}
         </Badge>
       ),
     },
-    { key: 'objectType', header: t('history.objectType'), sortable: true },
-    { key: 'objectId', header: t('history.objectId') },
     {
       key: 'actions',
       header: t('common.actions'),
       render: (row) => (
-        <Button variant="ghost" size="sm" onClick={() => setDetailId(row.id)}>
-          {t('history.details')}
-        </Button>
+        <RowActions actions={[
+          { key: 'view', icon: <IconView />, title: t('history.details'), onClick: () => setDetailId(row.id) },
+        ]} />
       ),
     },
   ];
@@ -119,31 +152,35 @@ export default function HistoryPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-3">
+          {objectIdFilter && (
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M10 3L5 8l5 5" />
+              </svg>
+              {t('common.backToList')}
+            </button>
+          )}
           <h1 className="text-xl font-semibold text-gray-900">{t('history.title')}</h1>
           {objectIdFilter && (
-            <p className="text-sm text-gray-500">
-              Filtered: objectId = {objectIdFilter}{' '}
-              <button
-                type="button"
-                className="text-primary-600 underline"
-                onClick={() => setSearchParams({})}
-              >
-                Clear
-              </button>
-            </p>
+            <span className="text-sm text-gray-400 font-normal">
+              — {objectIdFilter}
+            </span>
           )}
         </div>
-      </div>
-
-      <div className="max-w-sm">
-        <input
-          type="text"
-          className="form-input"
-          placeholder={t('common.search')}
-          value={listOps.search}
-          onChange={(e) => listOps.setSearch(e.target.value)}
-        />
+        {objectIdFilter && (
+          <button
+            type="button"
+            className="text-xs text-gray-400 hover:text-gray-600 underline"
+            onClick={() => setSearchParams({})}
+          >
+            {t('history.showAll')}
+          </button>
+        )}
       </div>
 
       {isLoading ? (

@@ -15,6 +15,8 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Textarea } from '../../components/ui/Textarea';
 import { Checkbox } from '../../components/ui/Checkbox';
+import { ErrorBanner } from '../../components/ui/ErrorBanner';
+import { useFormError } from '../../hooks/useFormError';
 import { TranslationEditor } from '../../components/form/TranslationEditor';
 import { DictionarySelect } from '../../components/form/DictionarySelect';
 import { Spinner } from '../../components/ui/Spinner';
@@ -112,6 +114,7 @@ export default function ProductModal({ editId, onClose }: ProductModalProps) {
   const onSubmit = (v: FormValues) => isEdit ? updateMutation.mutate(v) : createMutation.mutate(v);
   const isPending = createMutation.isPending || updateMutation.isPending;
   const mutationError = createMutation.error || updateMutation.error;
+  const { errorMessage, onValidationError } = useFormError(mutationError);
 
   return (
     <Modal isOpen onClose={onClose}
@@ -128,7 +131,7 @@ export default function ProductModal({ editId, onClose }: ProductModalProps) {
         <div className="flex justify-center py-8"><Spinner /></div>
       ) : (
         <FormProvider {...methods}>
-          <form id="product-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <form id="product-form" onSubmit={handleSubmit(onSubmit, onValidationError)} className="space-y-4" noValidate>
             <TranslationEditor fieldName="name" label={t('common.name')} required />
 
             <DictionarySelect name="groupId" label={t('products.group')} items={productGroups} lang={lang} required />
@@ -151,6 +154,7 @@ export default function ProductModal({ editId, onClose }: ProductModalProps) {
                     <Input
                       placeholder={t('products.fieldName')}
                       error={errors.licenseTemplate?.[index]?.name?.message}
+                      required
                       {...register(`licenseTemplate.${index}.name`)}
                     />
                     <Select
@@ -186,7 +190,7 @@ export default function ProductModal({ editId, onClose }: ProductModalProps) {
               </div>
             </fieldset>
 
-            {mutationError && <p className="text-sm text-red-600">{t('common.errorOccurred')}</p>}
+            <ErrorBanner message={errorMessage} />
           </form>
         </FormProvider>
       )}

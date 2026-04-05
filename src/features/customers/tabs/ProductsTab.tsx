@@ -19,7 +19,7 @@ export function ProductsTab() {
     queryFn: getProducts,
   });
 
-  const activeProducts = allProducts.filter((p) => !p.isBlocked);
+  const activeProducts = Array.isArray(allProducts) ? allProducts.filter((p) => !p.isBlocked) : [];
 
   return (
     <div className="space-y-2">

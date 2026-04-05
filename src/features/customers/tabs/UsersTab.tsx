@@ -16,7 +16,7 @@ import { PasswordField } from '../../../components/form/PasswordField';
 export function UsersTab({ isEdit }: { isEdit: boolean }) {
   const { t } = useTranslation();
   const { lang } = useAuth();
-  const { control, register, formState: { errors } } = useFormContext<CustomerFormValues>();
+  const { control, register, watch, formState: { errors } } = useFormContext<CustomerFormValues>();
   const { fields, append, remove } = useFieldArray({ control, name: 'users' });
 
   const { data: allProducts = [] } = useQuery({
@@ -24,8 +24,11 @@ export function UsersTab({ isEdit }: { isEdit: boolean }) {
     queryFn: getProducts,
   });
 
-  // Only products with hasUsers = true can be in user.allowedProducts
-  const userProducts = allProducts.filter((p) => p.hasUsers && !p.isBlocked);
+  // Only products with hasUsers=true that are in the customer's licenseInfo
+  const licenseProductIds = new Set((watch('licenseInfo.products') ?? []).map((lp) => lp.productId));
+  const userProducts = Array.isArray(allProducts)
+    ? allProducts.filter((p) => p.hasUsers && !p.isBlocked && licenseProductIds.has(p.id))
+    : [];
 
   const addUser = () => {
     append({
@@ -69,6 +72,7 @@ export function UsersTab({ isEdit }: { isEdit: boolean }) {
                 <Input
                   label={t('employees.username')}
                   error={userErrors.username?.message}
+                  required
                   {...register(`users.${index}.username`)}
                 />
                 <Input

@@ -2,12 +2,12 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { getCountries } from '../../../api/countries';
-import { getCities } from '../../../api/cities';
-import { getDistricts } from '../../../api/districts';
+import { getDictionary } from '../../../api/dictionaries';
 import { queryKeys } from '../../../queryKeys';
 import { useAuth } from '../../../providers/AuthProvider';
 import type { CustomerFormValues } from '../../../types/customer';
+import type { CityListItem } from '../../../types/city';
+import type { DistrictListItem } from '../../../types/district';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
 import { GeoSelector } from '../../../components/form/GeoSelector';
@@ -17,9 +17,9 @@ export function ContactInfoTab() {
   const { lang } = useAuth();
   const { register, formState: { errors } } = useFormContext<CustomerFormValues>();
 
-  const { data: countries = [] } = useQuery({ queryKey: queryKeys.countries.all, queryFn: getCountries });
-  const { data: cities = [] } = useQuery({ queryKey: queryKeys.cities.all, queryFn: getCities });
-  const { data: districts = [] } = useQuery({ queryKey: queryKeys.districts.all, queryFn: getDistricts });
+  const { data: countries = [] } = useQuery({ queryKey: queryKeys.countries.all, queryFn: () => getDictionary('countries') });
+  const { data: cities = [] } = useQuery({ queryKey: queryKeys.cities.all, queryFn: () => getDictionary('cities') as Promise<CityListItem[]> });
+  const { data: districts = [] } = useQuery({ queryKey: queryKeys.districts.all, queryFn: () => getDictionary('districts') as Promise<DistrictListItem[]> });
 
   const contactErrors = errors.contactInfo as Record<string, { message?: string }> | undefined;
 

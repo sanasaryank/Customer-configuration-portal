@@ -9,7 +9,7 @@ interface DictionarySelectProps {
   name: string;
   label?: string;
   placeholder?: string;
-  items: HasIdAndName[];
+  items: HasIdAndName[] | null | undefined;
   lang: LangCode;
   required?: boolean;
   disabled?: boolean;
@@ -59,8 +59,7 @@ export function DictionarySelect({
             allowEmpty ? (placeholder ?? '— Select —') : undefined
           }
           error={errorMsg}
-          disabled={disabled}
-          value={field.value ?? ''}
+          disabled={disabled}          required={required}          value={field.value ?? ''}
           onChange={(e) => field.onChange(e.target.value)}
         />
       )}

@@ -11,9 +11,9 @@ import { buildSelectOptions } from '../../utils/lookup';
 interface GeoSelectorProps {
   /** Name prefix, e.g. "contactInfo.geo" */
   prefix: string;
-  countries: CountryListItem[];
-  cities: CityListItem[];
-  districts: DistrictListItem[];
+  countries: CountryListItem[] | null | undefined;
+  cities: CityListItem[] | null | undefined;
+  districts: DistrictListItem[] | null | undefined;
   lang: LangCode;
 }
 
@@ -30,12 +30,15 @@ export function GeoSelector({
   const countryId = useWatch({ control, name: `${prefix}.countryId` });
   const cityId = useWatch({ control, name: `${prefix}.cityId` });
 
-  const filteredCities = cities.filter((c) => c.countryId === countryId);
-  const filteredDistricts = districts.filter((d) => d.cityId === cityId);
+  const safeCities = Array.isArray(cities) ? cities : [];
+  const safeDistricts = Array.isArray(districts) ? districts : [];
 
-  const countryOptions = buildSelectOptions(countries as never, lang);
-  const cityOptions = buildSelectOptions(filteredCities as never, lang);
-  const districtOptions = buildSelectOptions(filteredDistricts as never, lang);
+  const filteredCities = safeCities.filter((c) => c.countryId === countryId);
+  const filteredDistricts = safeDistricts.filter((d) => d.cityId === cityId);
+
+  const countryOptions = buildSelectOptions(countries, lang);
+  const cityOptions = buildSelectOptions(filteredCities, lang);
+  const districtOptions = buildSelectOptions(filteredDistricts, lang);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

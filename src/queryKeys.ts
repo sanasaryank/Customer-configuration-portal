@@ -10,24 +10,6 @@ export const queryKeys = {
     byId: (id: string) => ['employees', id] as const,
   },
 
-  // Countries
-  countries: {
-    all: ['countries'] as const,
-    byId: (id: string) => ['countries', id] as const,
-  },
-
-  // Cities
-  cities: {
-    all: ['cities'] as const,
-    byId: (id: string) => ['cities', id] as const,
-  },
-
-  // Districts
-  districts: {
-    all: ['districts'] as const,
-    byId: (id: string) => ['districts', id] as const,
-  },
-
   // Products
   products: {
     all: ['products'] as const,
@@ -40,8 +22,8 @@ export const queryKeys = {
     byId: (id: string) => ['customers', id] as const,
   },
 
-  // Working days
-  workingDays: ['workingDays'] as const,
+  // Working days (scoped per country)
+  workingDays: (countryId: string) => ['workingDays', countryId] as const,
 
   // History
   history: {
@@ -50,8 +32,22 @@ export const queryKeys = {
     item: (id: number) => ['historyItem', id] as const,
   },
 
-  // Dictionaries
+  // Dictionaries (includes countries, cities, districts)
   dict: (key: DictionaryKey) => ['dictionary', key] as const,
   dictById: (key: DictionaryKey, id: string) =>
     ['dictionary', key, id] as const,
+
+  // Geo aliases — point to dictionary cache for backward compat
+  countries: {
+    all: ['dictionary', 'countries'] as const,
+    byId: (id: string) => ['dictionary', 'countries', id] as const,
+  },
+  cities: {
+    all: ['dictionary', 'cities'] as const,
+    byId: (id: string) => ['dictionary', 'cities', id] as const,
+  },
+  districts: {
+    all: ['dictionary', 'districts'] as const,
+    byId: (id: string) => ['dictionary', 'districts', id] as const,
+  },
 } as const;

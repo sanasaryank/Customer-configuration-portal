@@ -40,6 +40,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { label: t('nav.productGroups'), path: ROUTES.PRODUCT_GROUPS },
     { label: t('nav.customerGroups'), path: ROUTES.CUSTOMER_GROUPS },
     { label: t('nav.customerStatus'), path: ROUTES.CUSTOMER_STATUS },
+    { label: t('nav.licenseTypes'), path: ROUTES.LICENSE_TYPES },
     { label: t('nav.countries'), path: ROUTES.COUNTRIES },
     { label: t('nav.cities'), path: ROUTES.CITIES },
     { label: t('nav.districts'), path: ROUTES.DISTRICTS },

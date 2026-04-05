@@ -69,8 +69,8 @@ This applies to:
 
 employees.password
 customers.users[].password
-customers.connectionInfo.serverPassword
-customers.connectionInfo.password
+customers.licenseInfo.products[].connectionInfo.serverPassword
+customers.licenseInfo.products[].connectionInfo.password
 2.6 Blocking rule
 isBlocked exists for all entities except:
 history
@@ -120,7 +120,7 @@ history userId -> employee username
 customer groupId -> customer group name
 customer statusId -> customer status name
 product groupId -> product group name
-customer products[] -> product names
+customer licenseInfo.products[].productId -> product names
 responsibleId -> employee name/username
 2.9 Modal rule
 
@@ -150,24 +150,28 @@ workingDays uses a dedicated page, not a modal.
   "role": "admin | superadmin"
 }
 3.3 History detail item
+
+The backend returns a single nested diff object (not an array).
+
+Leaf diff node (terminal node):
 {
-  "oldState": {
-    "field": "string",
-    "value": {}
-  },
-  "newState": {
-    "field": "string",
-    "value": {}
-  }
+  "old": <JsonValue>,
+  "new": <JsonValue>
+}
+
+Nested diff node:
+{
+  "key": <LeafDiffNode | NestedDiffNode>
 }
 
 Rules:
 
-field may contain nested path like field1->field2->field3
-value is json (any)
-if value is array -> display as array
-if value is object -> render structured JSON / tree / formatted block
-if primitive -> render plain value
+objects are compared recursively; nesting can be arbitrarily deep
+arrays of scalar values are atomic — compared in full as old/new pair, not per element
+arrays of objects are diffed recursively on the backend and appear as nested objects keyed by match labels (e.g. "id=10", "new:id=15", "old:#1", "best_match#1")
+scalar values are serialised to strings by the backend
+missing values are represented by the string "<missing>"
+for password changes backend returns { "old": "Old", "new": "New" } — UI must not attempt to reveal actual password values
 4. Endpoints
 4.1 Auth
 POST /login
@@ -179,21 +183,21 @@ GET /employees/{id}
 POST /employees
 PUT /employees/{id}
 DELETE /employees/{id}
-GET /countries
-GET /countries/{id}
-POST /countries
-PUT /countries/{id}
-DELETE /countries/{id}
-GET /cities
-GET /cities/{id}
-POST /cities
-PUT /cities/{id}
-DELETE /cities/{id}
-GET /districts
-GET /districts/{id}
-POST /districts
-PUT /districts/{id}
-DELETE /districts/{id}
+GET /dictionary/countries
+GET /dictionary/countries/{id}
+POST /dictionary/countries
+PUT /dictionary/countries/{id}
+DELETE /dictionary/countries/{id}
+GET /dictionary/cities
+GET /dictionary/cities/{id}
+POST /dictionary/cities
+PUT /dictionary/cities/{id}
+DELETE /dictionary/cities/{id}
+GET /dictionary/districts
+GET /dictionary/districts/{id}
+POST /dictionary/districts
+PUT /dictionary/districts/{id}
+DELETE /dictionary/districts/{id}
 GET /products
 GET /products/{id}
 POST /products
@@ -204,9 +208,10 @@ GET /customers/{id}
 POST /customers
 PUT /customers/{id}
 DELETE /customers/{id}
+POST /customers/moveLicense/{dstId}  body: { srcId: string }
 4.3 Working days
-GET /workingDays
-POST /workingDays
+GET /workingDays/{countryId}
+POST /workingDays/{countryId}
 4.4 History
 GET /history
 GET /history/{objectId}
@@ -432,7 +437,8 @@ frontend should allow assigning user products only for products where hasUsers =
     "brandName": "string",
     "tin": "string",
     "bankAccount": "string",
-    "description": "string"
+    "description": "string",
+    "isBlocked": true
   },
   "contactInfo": {
     "address": "string",
@@ -447,26 +453,23 @@ frontend should allow assigning user products only for products where hasUsers =
     "phone": "string",
     "email": "string"
   },
-  "connectionInfo": {
-    "connectionTypeId": "string",
-    "host": "string",
-    "port": 8020,
-    "serverUsername": "string",
-    "username": "string"
-  },
-  "products": ["string"],
   "licenseInfo": {
-    "hardwareKey": "string",
     "products": [
       {
         "productId": "string",
+        "hardwareKey": "string",
         "licenseKey": "string",
         "licenseData": {
           "connectionsCount": 5,
           "endDate": "2026-12-31"
         },
-        "movedFrom": "string",
-        "movedTo": "string"
+        "connectionInfo": {
+          "connectionTypeId": "string",
+          "host": "string",
+          "port": 8020,
+          "serverUsername": "string",
+          "username": "string"
+        }
       }
     ]
   },
@@ -483,8 +486,7 @@ frontend should allow assigning user products only for products where hasUsers =
       "allowedProducts": ["string"],
       "isBlocked": true
     }
-  ],
-  "isBlocked": true
+  ]
 }
 
 with hash added in GET by id / POST response / PUT payload / PUT response.
@@ -493,8 +495,8 @@ with hash added in GET by id / POST response / PUT payload / PUT response.
 
 Inside customer write payloads only:
 
-connectionInfo.serverPassword
-connectionInfo.password
+licenseInfo.products[].connectionInfo.serverPassword
+licenseInfo.products[].connectionInfo.password
 users[].password
 
 These are never returned in any GET/POST-response/PUT-response.
@@ -506,31 +508,36 @@ generalInfo.groupId -> /dictionary/customerGroups
 contactInfo.geo.countryId -> /countries
 contactInfo.geo.cityId -> /cities
 contactInfo.geo.districtId -> /districts
-connectionInfo.connectionTypeId -> /dictionary/integrationTypes
-products[] -> product IDs
-users[].allowedProducts[] -> product IDs
+licenseInfo.products[].connectionInfo.connectionTypeId -> /dictionary/integrationTypes
+users[].allowedProducts[] -> product IDs (must be from licenseInfo.products[].productId with hasUsers = true)
 5.7.4 Customer user rules
 customer users are edited only inside customer, no separate endpoints
 users[].password:
 required when creating new user
 optional when editing existing user
 never returned by backend
-allowedProducts can contain only products with hasUsers = true
+allowedProducts can contain only products listed in licenseInfo.products[] where hasUsers = true
 5.7.5 Customer license rules
 
-Each product may have its own license block.
+Products are tracked exclusively via licenseInfo.products[]. There is no separate top-level products[] field.
 
 licenseInfo.products[] item:
 
 {
   "productId": "string",
+  "hardwareKey": "string",
   "licenseKey": "string",
   "licenseData": {
     "connectionsCount": 5,
     "endDate": "2026-12-31"
   },
-  "movedFrom": "string",
-  "movedTo": "string"
+  "connectionInfo": {
+    "connectionTypeId": "string",
+    "host": "string",
+    "port": 8020,
+    "serverUsername": "string",
+    "username": "string"
+  }
 }
 
 Validation rules:
@@ -541,24 +548,25 @@ required keys must match licenseTemplate[].required = true
 
 Dynamic behavior:
 
-if product is added to customers.products[] and that product has licenseTemplate, frontend must create or request corresponding block in licenseInfo.products[]
-if product is removed from customers.products[], frontend must not delete corresponding licenseInfo.products[] item
-instead, frontend shows that license block as disabled
-backend is responsible for actual removal/cleanup
+Products are added/removed directly in licenseInfo.products[] via the License Info tab in the customer form.
+Frontend creates a new empty license block when user adds a product via the "Add Product" selector.
+Frontend allows removing a license block entirely when user removes a product.
+License transfer:
+  POST /customers/moveLicense/{dstId} with body { srcId } moves the license from the source customer to the destination customer
+  The "Move License" action is available per-customer in the customer list
+  A customer picker modal opens, allowing search by name; the source customer is excluded from the listbackend is responsible for actual removal/cleanup
 5.7.6 Customer list display mapping
 
 In customer table display:
 
 group = resolved name by generalInfo.groupId
-productTypes = resolved names from products[]
+productTypes = resolved names from licenseInfo.products[].productId
 status = resolved name by generalInfo.statusId
-isBlocked = root isBlocked
+isBlocked = generalInfo.isBlocked
 5.8 Working days
-GET /workingDays
-{
-  "dates": ["2025-01-01", "2025-01-02"]
-}
-POST /workingDays
+GET /workingDays/{countryId}
+["2025-01-01", "2025-01-02"]
+POST /workingDays/{countryId}
 {
   "date": "2025-01-01",
   "action": "add | remove"
@@ -566,6 +574,9 @@ POST /workingDays
 
 Rules:
 
+backend returns non-working days (holidays/days off), not working days
+action "add" = add date to holidays (mark as non-working)
+action "remove" = remove date from holidays (mark as working)
 this is the only date-like structure using string day format YYYY-MM-DD
 no hash
 no userId
@@ -592,18 +603,37 @@ GET /history -> all history list items
 GET /history/{objectId} -> history list items only for one object
 GET /historyItem/{id} -> diff array
 History details response
-[
-  {
-    "oldState": {
-      "field": "generalInfo->name->ARM",
-      "value": "Old value"
+
+GET /historyItem/{id} returns a single nested diff object:
+
+{
+  "generalInfo": {
+    "name": {
+      "ARM": {
+        "old": "Old value",
+        "new": "New value"
+      }
+    }
+  },
+  "items": {
+    "id=10": {
+      "price": {
+        "old": "500",
+        "new": "550"
+      }
     },
-    "newState": {
-      "field": "generalInfo->name->ARM",
-      "value": "New value"
+    "new:id=15": {
+      "name": {
+        "old": "<missing>",
+        "new": "Cola"
+      }
     }
   }
-]
+}
+
+A node is a leaf diff node when it contains exactly the keys "old" and "new".
+All other non-empty objects are nested diff nodes.
+Array-item match label keys (id=..., new:..., old:..., best_match#...) are backend-generated identifiers, not entity field names, and must be rendered as group headers.
 6. Date and time rules
 6.1 Unix timestamp unit
 
@@ -674,10 +704,11 @@ include hash on edit payloads
 
 Dedicated page with calendar/day management UI. Capabilities:
 
-load all dates from GET /workingDays
-visually mark active working days
-add day via POST /workingDays with action add
-remove day via POST /workingDays with action remove
+user selects a country from the country dropdown (auto-selected if only one exists)
+load non-working days from GET /workingDays/{countryId}
+visually mark non-working days as red, working days as green
+mark day as non-working via POST /workingDays/{countryId} with action add
+mark day as working via POST /workingDays/{countryId} with action remove
 8.5 History UI
 
 History page must support:
@@ -686,7 +717,13 @@ global history list using GET /history
 object-specific history access using GET /history/{objectId}
 opening details of a single history item via GET /historyItem/{id}
 display username by resolving userId
-display diff values depending on actual JSON type
+recursively render the nested diff tree returned by GET /historyItem/{id}:
+  leaf diff nodes render as old/new value rows
+  nested diff nodes render as labelled indented sections
+  array-item match labels (id=..., new:..., old:..., best_match#...) render as group headers distinguished from ordinary field labels
+  the string "<missing>" renders as a styled missing-value marker
+  atomic array values (old/new are arrays) render as formatted JSON blocks
+  password diffs display the provided old/new strings without any reveal logic
 9. Suggested frontend behavior for AI implementation
 9.1 Data layer
 

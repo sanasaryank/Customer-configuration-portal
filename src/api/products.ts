@@ -1,4 +1,4 @@
-import { get, post, put, del } from './client';
+import { get, post, put } from './client';
 import { ENDPOINTS } from '../constants/endpoints';
 import type {
   Product,
@@ -8,7 +8,9 @@ import type {
 } from '../types/product';
 
 export async function getProducts(): Promise<ProductListItem[]> {
-  return get<ProductListItem[]>(ENDPOINTS.PRODUCTS);
+  const result = await get<unknown>(ENDPOINTS.PRODUCTS);
+  if (Array.isArray(result)) return result as ProductListItem[];
+  return [];
 }
 
 export async function getProduct(id: string): Promise<Product> {
@@ -28,6 +30,4 @@ export async function updateProduct(
   return put<Product>(`${ENDPOINTS.PRODUCTS}/${id}`, payload);
 }
 
-export async function deleteProduct(id: string): Promise<void> {
-  return del(`${ENDPOINTS.PRODUCTS}/${id}`);
-}
+

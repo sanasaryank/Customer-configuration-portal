@@ -14,6 +14,8 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Textarea } from '../../components/ui/Textarea';
 import { Checkbox } from '../../components/ui/Checkbox';
+import { ErrorBanner } from '../../components/ui/ErrorBanner';
+import { useFormError } from '../../hooks/useFormError';
 import { TranslationEditor } from '../../components/form/TranslationEditor';
 import { PasswordField } from '../../components/form/PasswordField';
 import { Spinner } from '../../components/ui/Spinner';
@@ -109,6 +111,7 @@ export default function EmployeeModal({ editId, onClose }: EmployeeModalProps) {
 
   const isPending = createMutation.isPending || updateMutation.isPending;
   const mutationError = createMutation.error || updateMutation.error;
+  const { errorMessage, onValidationError, clearValidationError } = useFormError(mutationError);
 
   const roleOptions = [
     { value: 'admin', label: t('employees.admin') },
@@ -138,7 +141,7 @@ export default function EmployeeModal({ editId, onClose }: EmployeeModalProps) {
         <FormProvider {...methods}>
           <form
             id="employee-form"
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(onSubmit, onValidationError)}
             className="space-y-4"
             noValidate
           >
@@ -146,6 +149,7 @@ export default function EmployeeModal({ editId, onClose }: EmployeeModalProps) {
               id="emp-username"
               label={t('employees.username')}
               error={errors.username?.message}
+              required
               {...register('username')}
             />
 
@@ -163,6 +167,7 @@ export default function EmployeeModal({ editId, onClose }: EmployeeModalProps) {
               label={t('employees.role')}
               options={roleOptions}
               error={errors.role?.message}
+              required
               {...register('role')}
             />
 
@@ -177,9 +182,7 @@ export default function EmployeeModal({ editId, onClose }: EmployeeModalProps) {
               {...register('isBlocked')}
             />
 
-            {mutationError && (
-              <p className="text-sm text-red-600">{t('common.errorOccurred')}</p>
-            )}
+            <ErrorBanner message={errorMessage} />
           </form>
         </FormProvider>
       )}

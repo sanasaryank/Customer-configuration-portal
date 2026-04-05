@@ -1,9 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   getEmployees,
-  deleteEmployee,
   getEmployee,
   updateEmployee,
 } from '../../api/employees';
@@ -11,15 +10,16 @@ import { queryKeys } from '../../queryKeys';
 import type { EmployeeListItem } from '../../types/employee';
 import { useAuth } from '../../providers/AuthProvider';
 import { useListOperations } from '../../hooks/useListOperations';
-import { useConfirmDialog } from '../../hooks/useConfirmDialog';
+import type { FilterField } from '../../hooks/useListOperations';
+import { useFilterValues } from '../../providers/FilterProvider';
 import { resolveTranslation } from '../../utils/translation';
+import { extractTranslation } from '../../utils/translation';
 import { Table } from '../../components/ui/Table';
 import type { TableColumn } from '../../components/ui/Table';
-import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Pagination } from '../../components/ui/Pagination';
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Spinner';
+import { RowActions, IconEdit, IconLock, IconUnlock, IconHistory } from '../../components/ui/RowActions';
 import EmployeeModal from './EmployeeModal';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
@@ -30,16 +30,11 @@ export default function EmployeesPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [modalEditId, setModalEditId] = useState<string | null | undefined>(undefined);
-  const confirmDialog = useConfirmDialog();
+  const filterValues = useFilterValues();
 
   const { data = [], isLoading } = useQuery({
     queryKey: queryKeys.employees.all,
     queryFn: getEmployees,
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteEmployee,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.employees.all }),
   });
 
   const blockMutation = useMutation({
@@ -50,14 +45,26 @@ export default function EmployeesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.employees.all }),
   });
 
+  const filterFields = useMemo<FilterField<EmployeeListItem>[]>(() => [
+    { key: 'name',      extract: (item) => extractTranslation(item.name, lang) },
+    { key: 'isBlocked', extract: (item) => item.isBlocked ? 'blocked' : 'active', matchMode: 'exact' },
+  ], [lang]);
+
+  const sortFields = useMemo<Record<string, (item: EmployeeListItem) => string>>(() => ({
+    id: (item) => item.id,
+    name: (item) => resolveTranslation(item.name, lang),
+    isBlocked: (item) => String(item.isBlocked),
+  }), [lang]);
+
   const listOps = useListOperations<EmployeeListItem>({
     data,
     searchFields: (item) => [
-      item.username,
       resolveTranslation(item.name, lang),
-      item.role,
-      item.description ?? '',
+      item.username,
     ],
+    filterFields,
+    externalFilters: filterValues,
+    sortFields,
   });
 
   const handleSort = useCallback((key: string) => {
@@ -67,14 +74,8 @@ export default function EmployeesPage() {
     });
   }, [listOps]);
 
-  const handleDelete = (id: string) => {
-    confirmDialog.requestConfirm(async () => {
-      await deleteMutation.mutateAsync(id);
-    });
-  };
-
   const columns: TableColumn<EmployeeListItem>[] = [
-    { key: 'username', header: t('employees.username'), sortable: true },
+    { key: 'id', header: t('common.id'), sortable: true, render: (row) => row.id },
     {
       key: 'name',
       header: t('common.name'),
@@ -82,56 +83,14 @@ export default function EmployeesPage() {
       render: (row) => resolveTranslation(row.name, lang),
     },
     {
-      key: 'role',
-      header: t('employees.role'),
-      sortable: true,
-      render: (row) =>
-        row.role === 'superadmin'
-          ? t('employees.superadmin')
-          : t('employees.admin'),
-    },
-    {
-      key: 'isBlocked',
-      header: t('common.status'),
-      render: (row) =>
-        row.isBlocked ? (
-          <Badge variant="danger">{t('common.blocked')}</Badge>
-        ) : (
-          <Badge variant="success">{t('common.active')}</Badge>
-        ),
-    },
-    { key: 'description', header: t('common.description'), render: (row) => row.description || '—' },
-    {
       key: 'actions',
       header: t('common.actions'),
       render: (row) => (
-        <div className="flex items-center gap-1 flex-wrap">
-          <Button variant="ghost" size="sm" onClick={() => setModalEditId(row.id)}>
-            {t('common.edit')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => blockMutation.mutate({ id: row.id, isBlocked: !row.isBlocked })}
-          >
-            {row.isBlocked ? t('common.unblock') : t('common.block')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-red-600 hover:text-red-800"
-            onClick={() => handleDelete(row.id)}
-          >
-            {t('common.delete')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(`${ROUTES.HISTORY}?objectId=${row.id}`)}
-          >
-            {t('common.history')}
-          </Button>
-        </div>
+        <RowActions actions={[
+          { key: 'edit',    icon: <IconEdit />,                                   title: t('common.edit'),    onClick: () => setModalEditId(row.id) },
+          { key: 'block',   icon: row.isBlocked ? <IconLock /> : <IconUnlock />, title: row.isBlocked ? t('common.unblock') : t('common.block'), variant: row.isBlocked ? 'warning' : 'default', onClick: () => blockMutation.mutate({ id: row.id, isBlocked: !row.isBlocked }) },
+          { key: 'history', icon: <IconHistory />,                                title: t('common.history'), onClick: () => navigate(`${ROUTES.HISTORY}?objectId=${row.id}`) },
+        ]} />
       ),
     },
   ];
@@ -141,16 +100,6 @@ export default function EmployeesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">{t('employees.title')}</h1>
         <Button onClick={() => setModalEditId(null)}>{t('common.create')}</Button>
-      </div>
-
-      <div className="max-w-sm">
-        <input
-          type="text"
-          className="form-input"
-          placeholder={t('common.search')}
-          value={listOps.search}
-          onChange={(e) => listOps.setSearch(e.target.value)}
-        />
       </div>
 
       {isLoading ? (
@@ -183,13 +132,6 @@ export default function EmployeesPage() {
           onClose={() => setModalEditId(undefined)}
         />
       )}
-
-      <ConfirmDialog
-        isOpen={confirmDialog.isOpen}
-        onClose={confirmDialog.close}
-        onConfirm={confirmDialog.confirm}
-        loading={deleteMutation.isPending}
-      />
     </div>
   );
 }

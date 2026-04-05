@@ -10,10 +10,11 @@ export interface HasIdAndName {
  * Build a Map<id, displayName> from a list of entities that have id and a Translation name.
  */
 export function buildLookupMap(
-  items: HasIdAndName[],
+  items: HasIdAndName[] | null | undefined,
   lang: LangCode,
 ): Map<string, string> {
   const map = new Map<string, string>();
+  if (!Array.isArray(items)) return map;
   for (const item of items) {
     map.set(item.id, resolveTranslation(item.name, lang));
   }
@@ -47,9 +48,10 @@ export function resolveIds(
  * Build select options from a list with id + Translation name.
  */
 export function buildSelectOptions(
-  items: HasIdAndName[],
+  items: HasIdAndName[] | null | undefined,
   lang: LangCode,
 ): { value: string; label: string }[] {
+  if (!Array.isArray(items)) return [];
   return items.map((item) => ({
     value: item.id,
     label: resolveTranslation(item.name, lang),

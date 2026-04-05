@@ -1,22 +1,28 @@
-import React from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+﻿import React from 'react';
+import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
+  getDictionary,
   getDictionaryItem,
   createDictionaryItem,
   updateDictionaryItem,
 } from '../../api/dictionaries';
 import { queryKeys } from '../../queryKeys';
 import type { DictionaryKey, DictionaryItem } from '../../types/dictionary';
+import { useAuth } from '../../providers/AuthProvider';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Textarea } from '../../components/ui/Textarea';
 import { Checkbox } from '../../components/ui/Checkbox';
+import { Select } from '../../components/ui/Select';
+import { ErrorBanner } from '../../components/ui/ErrorBanner';
+import { useFormError } from '../../hooks/useFormError';
 import { TranslationEditor } from '../../components/form/TranslationEditor';
 import { Spinner } from '../../components/ui/Spinner';
+import { resolveTranslation } from '../../utils/translation';
 
 const translationSchema = z.object({
   ARM: z.string(),
@@ -25,6 +31,7 @@ const translationSchema = z.object({
 });
 
 const schema = z.object({
+  parentId: z.string().optional(),
   name: translationSchema,
   description: z.string(),
   isBlocked: z.boolean(),
@@ -36,93 +43,116 @@ interface DictionaryModalProps {
   dictKey: DictionaryKey;
   editId: string | null;
   onClose: () => void;
+  parentKey?: DictionaryKey;
+  parentField?: string;
+  parentLabel?: string;
 }
 
 export default function DictionaryModal({
   dictKey,
   editId,
   onClose,
+  parentKey,
+  parentField,
+  parentLabel,
 }: DictionaryModalProps) {
   const { t } = useTranslation();
+  const { lang } = useAuth();
   const queryClient = useQueryClient();
   const isEdit = editId !== null;
+  const hasParent = !!parentKey && !!parentField;
 
-  // Load existing item for edit mode
   const { data: existing, isLoading: loadingItem } = useQuery({
     queryKey: queryKeys.dictById(dictKey, editId ?? ''),
     queryFn: () => getDictionaryItem(dictKey, editId!),
     enabled: isEdit,
   });
 
+  const { data: parentItems = [] } = useQuery({
+    queryKey: queryKeys.dict(parentKey!),
+    queryFn: () => getDictionary(parentKey!),
+    enabled: hasParent,
+  });
+
   const methods = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
+      parentId: '',
       name: { ARM: '', ENG: '', RUS: '' },
       description: '',
       isBlocked: false,
     },
   });
 
-  const { reset, register, handleSubmit, formState: { errors } } = methods;
+  const { reset, register, handleSubmit, control, formState: { errors } } = methods;
 
-  // Populate form when existing data loads
   React.useEffect(() => {
     if (existing) {
       reset({
+        parentId: hasParent
+          ? String((existing as unknown as Record<string, unknown>)[parentField!] ?? '')
+          : '',
         name: existing.name,
         description: existing.description ?? '',
         isBlocked: existing.isBlocked ?? false,
       });
     }
-  }, [existing, reset]);
+  }, [existing, reset, hasParent, parentField]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.dict(dictKey) });
     if (editId) {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.dictById(dictKey, editId),
-      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dictById(dictKey, editId) });
     }
+  };
+
+  const buildPayload = (values: FormValues) => {
+    const base = {
+      name: values.name,
+      description: values.description,
+      isBlocked: values.isBlocked,
+    };
+    if (hasParent && values.parentId) {
+      return { ...base, [parentField!]: values.parentId };
+    }
+    return base;
   };
 
   const createMutation = useMutation({
     mutationFn: (values: FormValues) =>
-      createDictionaryItem(dictKey, values),
-    onSuccess: () => {
-      invalidate();
-      onClose();
-    },
+      createDictionaryItem(dictKey, buildPayload(values)),
+    onSuccess: () => { invalidate(); onClose(); },
   });
 
   const updateMutation = useMutation({
     mutationFn: (values: FormValues) => {
       const payload = {
-        ...values,
+        ...buildPayload(values),
         id: existing!.id,
         hash: (existing as DictionaryItem).hash,
       };
       return updateDictionaryItem(dictKey, existing!.id, payload);
     },
-    onSuccess: () => {
-      invalidate();
-      onClose();
-    },
+    onSuccess: () => { invalidate(); onClose(); },
   });
 
   const onSubmit = (values: FormValues) => {
-    if (isEdit) {
-      updateMutation.mutate(values);
-    } else {
-      createMutation.mutate(values);
-    }
+    if (hasParent && !values.parentId) return;
+    if (isEdit) updateMutation.mutate(values);
+    else createMutation.mutate(values);
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
   const mutationError = createMutation.error || updateMutation.error;
+  const { errorMessage, onValidationError } = useFormError(mutationError);
 
-  const title = isEdit
-    ? t('dictionary.editTitle')
-    : t('dictionary.createTitle');
+  const safeParentItems = Array.isArray(parentItems) ? parentItems : [];
+  const parentOptions = safeParentItems.map((item) => ({
+    value: item.id,
+    label: resolveTranslation(item.name, lang),
+  }));
+
+  const title = isEdit ? t('dictionary.editTitle') : t('dictionary.createTitle');
 
   return (
     <Modal
@@ -135,11 +165,7 @@ export default function DictionaryModal({
           <Button variant="secondary" onClick={onClose} disabled={isPending}>
             {t('common.cancel')}
           </Button>
-          <Button
-            type="submit"
-            form="dict-modal-form"
-            loading={isPending}
-          >
+          <Button type="submit" form="dict-modal-form" loading={isPending}>
             {t('common.save')}
           </Button>
         </>
@@ -153,10 +179,27 @@ export default function DictionaryModal({
         <FormProvider {...methods}>
           <form
             id="dict-modal-form"
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(onSubmit, onValidationError)}
             className="space-y-4"
             noValidate
           >
+            {hasParent && (
+              <Controller
+                control={control}
+                name="parentId"
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    label={parentLabel ? t(parentLabel) : t('common.name')}
+                    options={parentOptions}
+                    placeholder="— Select —"
+                    value={field.value ?? ''}
+                    required
+                  />
+                )}
+              />
+            )}
+
             <TranslationEditor fieldName="name" label={t('common.name')} required />
 
             <Textarea
@@ -170,9 +213,7 @@ export default function DictionaryModal({
               {...register('isBlocked')}
             />
 
-            {mutationError && (
-              <p className="text-sm text-red-600">{t('common.errorOccurred')}</p>
-            )}
+            <ErrorBanner message={errorMessage} />
           </form>
         </FormProvider>
       )}

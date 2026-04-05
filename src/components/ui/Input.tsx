@@ -7,17 +7,19 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ error, label, className, id, ...rest }, ref) => {
+  ({ error, label, className, id, required, ...rest }, ref) => {
     return (
       <div className="w-full">
         {label && (
           <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
             {label}
+            {required && <span className="text-red-500 ml-0.5">*</span>}
           </label>
         )}
         <input
           ref={ref}
           id={id}
+          required={required}
           className={clsx(
             'form-input',
             error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : '',

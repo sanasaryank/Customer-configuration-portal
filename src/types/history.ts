@@ -12,17 +12,26 @@ export interface HistoryListItem {
   objectId: string;
 }
 
-// Single field diff in GET /historyItem/{id} response
-export interface HistoryDiffEntry {
-  oldState: {
-    field: string; // may be nested: "field1->field2->field3"
-    value: JsonValue;
-  };
-  newState: {
-    field: string;
-    value: JsonValue;
-  };
+/**
+ * Leaf diff node: the terminal node of a diff tree.
+ * Both `old` and `new` are the raw backend-provided values
+ * (scalars serialised to string, arrays kept as arrays).
+ * The string "<missing>" signals an absent value.
+ */
+export interface LeafDiffNode {
+  old: JsonValue;
+  new: JsonValue;
 }
 
-// GET /historyItem/{id} response is an array of diffs
-export type HistoryDetail = HistoryDiffEntry[];
+/**
+ * Nested diff node: each key maps to either a LeafDiffNode or
+ * another NestedDiffNode.  Keys may be real field names OR
+ * array-item match labels produced by the backend
+ * (e.g. "id=10", "new:id=15", "best_match#1", "old:#1").
+ */
+export type NestedDiffNode = {
+  [key: string]: LeafDiffNode | NestedDiffNode;
+};
+
+// GET /historyItem/{id} response — nested diff object
+export type HistoryDetail = NestedDiffNode;

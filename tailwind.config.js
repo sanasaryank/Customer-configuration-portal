@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  safelist: ['transition-[width]', 'w-0', 'w-64'],
   theme: {
     extend: {
       colors: {

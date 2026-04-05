@@ -7,18 +7,20 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 }
 
 export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ error, label, className, id, rows = 3, ...rest }, ref) => {
+  ({ error, label, className, id, rows = 3, required, ...rest }, ref) => {
     return (
       <div className="w-full">
         {label && (
           <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
             {label}
+            {required && <span className="text-red-500 ml-0.5">*</span>}
           </label>
         )}
         <textarea
           ref={ref}
           id={id}
           rows={rows}
+          required={required}
           className={clsx(
             'form-textarea',
             error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : '',
