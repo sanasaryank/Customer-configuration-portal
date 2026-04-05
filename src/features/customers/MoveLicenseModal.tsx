@@ -10,22 +10,32 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Spinner';
 
+export interface MoveLicenseProduct {
+  productId: string;
+  name: string;
+}
+
 interface MoveLicenseModalProps {
   srcId: string;
   srcName: string;
+  srcProducts: MoveLicenseProduct[];
   onClose: () => void;
 }
 
 export default function MoveLicenseModal({
   srcId,
   srcName,
+  srcProducts,
   onClose,
 }: MoveLicenseModalProps) {
   const { t } = useTranslation();
   const { lang } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(
+    srcProducts.length === 1 ? srcProducts[0]!.productId : null,
+  );
+  const [selectedDstId, setSelectedDstId] = useState<string | null>(null);
 
   const { data: allCustomers = [], isLoading } = useQuery({
     queryKey: queryKeys.customers.all,
@@ -33,7 +43,8 @@ export default function MoveLicenseModal({
   });
 
   const mutation = useMutation({
-    mutationFn: (dstId: string) => moveLicense(srcId, dstId),
+    mutationFn: ({ dstId, productId }: { dstId: string; productId: string }) =>
+      moveLicense(srcId, dstId, productId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.customers.all });
       onClose();
@@ -50,6 +61,8 @@ export default function MoveLicenseModal({
       });
   }, [allCustomers, srcId, search, lang]);
 
+  const canSubmit = !!selectedProductId && !!selectedDstId && !mutation.isPending;
+
   return (
     <Modal
       isOpen
@@ -62,42 +75,71 @@ export default function MoveLicenseModal({
           {t('customers.moveLicenseFrom')}: <span className="font-medium">{srcName}</span>
         </p>
 
-        <Input
-          placeholder={t('common.search')}
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setSelectedId(null);
-          }}
-          autoFocus
-        />
+        {/* Product selection */}
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            {t('customers.moveLicenseProduct')}
+          </p>
+          {srcProducts.length === 0 ? (
+            <p className="text-sm text-gray-400 py-2">{t('common.noData')}</p>
+          ) : (
+            <ul className="divide-y divide-gray-100 border border-gray-200 rounded-md">
+              {srcProducts.map((p) => {
+                const isSelected = selectedProductId === p.productId;
+                return (
+                  <li
+                    key={p.productId}
+                    className={`flex items-center px-3 py-2 cursor-pointer text-sm hover:bg-primary-50 transition-colors ${
+                      isSelected ? 'bg-primary-100 font-medium text-primary-700' : 'text-gray-800'
+                    }`}
+                    onClick={() => setSelectedProductId(p.productId)}
+                  >
+                    <span className="flex-1 truncate">{p.name || p.productId}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
 
-        {isLoading ? (
-          <div className="flex justify-center py-6">
-            <Spinner />
-          </div>
-        ) : candidates.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-4">{t('common.noData')}</p>
-        ) : (
-          <ul className="max-h-72 overflow-y-auto divide-y divide-gray-100 border border-gray-200 rounded-md">
-            {candidates.map((c) => {
-              const name = resolveTranslation(c.generalInfo?.name, lang);
-              const isSelected = selectedId === c.id;
-              return (
-                <li
-                  key={c.id}
-                  className={`flex items-center px-3 py-2 cursor-pointer text-sm hover:bg-primary-50 transition-colors ${
-                    isSelected ? 'bg-primary-100 font-medium text-primary-700' : 'text-gray-800'
-                  }`}
-                  onClick={() => setSelectedId(c.id)}
-                >
-                  <span className="flex-1 truncate">{name || c.id}</span>
-                  <span className="text-xs text-gray-400 ml-2 shrink-0">{c.id}</span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        {/* Destination customer selection */}
+        <div className="space-y-1">
+          <Input
+            placeholder={t('common.search')}
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setSelectedDstId(null);
+            }}
+          />
+
+          {isLoading ? (
+            <div className="flex justify-center py-6">
+              <Spinner />
+            </div>
+          ) : candidates.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-4">{t('common.noData')}</p>
+          ) : (
+            <ul className="max-h-56 overflow-y-auto divide-y divide-gray-100 border border-gray-200 rounded-md">
+              {candidates.map((c) => {
+                const name = resolveTranslation(c.generalInfo?.name, lang);
+                const isSelected = selectedDstId === c.id;
+                return (
+                  <li
+                    key={c.id}
+                    className={`flex items-center px-3 py-2 cursor-pointer text-sm hover:bg-primary-50 transition-colors ${
+                      isSelected ? 'bg-primary-100 font-medium text-primary-700' : 'text-gray-800'
+                    }`}
+                    onClick={() => setSelectedDstId(c.id)}
+                  >
+                    <span className="flex-1 truncate">{name || c.id}</span>
+                    <span className="text-xs text-gray-400 ml-2 shrink-0">{c.id}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
 
         {mutation.isError && (
           <p className="text-sm text-red-600">{t('common.errorOccurred')}</p>
@@ -108,8 +150,10 @@ export default function MoveLicenseModal({
             {t('common.cancel')}
           </Button>
           <Button
-            onClick={() => selectedId && mutation.mutate(selectedId)}
-            disabled={!selectedId || mutation.isPending}
+            onClick={() =>
+              canSubmit && mutation.mutate({ dstId: selectedDstId!, productId: selectedProductId! })
+            }
+            disabled={!canSubmit}
           >
             {mutation.isPending ? t('common.loading') : t('customers.moveLicenseConfirm')}
           </Button>

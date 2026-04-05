@@ -59,6 +59,7 @@ export type LicenseData = Record<string, JsonValue>;
 export interface CustomerLicenseProduct {
   productId: string;
   licenseTypeId: string;
+  endDate: number;
   hardwareKey: string;
   licenseKey: string;
   licenseData: LicenseData;
@@ -68,6 +69,7 @@ export interface CustomerLicenseProduct {
 export interface CustomerLicenseProductWrite {
   productId: string;
   licenseTypeId: string;
+  endDate: number;
   hardwareKey: string;
   licenseKey: string;
   licenseData: LicenseData;
@@ -77,6 +79,7 @@ export interface CustomerLicenseProductWrite {
 export interface CustomerLicenseProductForm {
   productId: string;
   licenseTypeId: string;
+  endDate: string;
   hardwareKey: string;
   licenseKey: string;
   licenseData: LicenseData;

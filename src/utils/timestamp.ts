@@ -36,3 +36,22 @@ export function toYMD(date: Date): string {
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
+
+/**
+ * Convert a Unix timestamp (seconds) to a YYYY-MM-DD string for <input type="date">.
+ * Returns '' for falsy values.
+ */
+export function unixToDateInput(seconds: number): string {
+  if (!seconds) return '';
+  return toYMD(new Date(seconds * 1000));
+}
+
+/**
+ * Convert a YYYY-MM-DD string from <input type="date"> to a Unix timestamp (seconds, UTC midnight).
+ * Returns 0 for empty/invalid strings.
+ */
+export function dateInputToUnix(dateStr: string): number {
+  if (!dateStr) return 0;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return Math.floor(Date.UTC(y!, m! - 1, d!) / 1000);
+}

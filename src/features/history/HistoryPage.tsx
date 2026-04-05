@@ -63,8 +63,21 @@ export default function HistoryPage() {
   );
   useRegisterFilterOptions('username', usernameOptions);
 
+  // Date range pre-filter (dateFrom / dateTo) — handled outside useListOperations
+  const dateRangeFiltered = useMemo(() => {
+    const fromStr = filterValues['dateFrom']?.trim() ?? '';
+    const toStr   = filterValues['dateTo']?.trim() ?? '';
+    if (!fromStr && !toStr) return data;
+    const fromTs = fromStr ? Math.floor(new Date(fromStr).getTime() / 1000) : NaN;
+    const toTs   = toStr   ? Math.floor(new Date(toStr).getTime()   / 1000) : NaN;
+    return (Array.isArray(data) ? data : []).filter((item) => {
+      if (!isNaN(fromTs) && item.date < fromTs) return false;
+      if (!isNaN(toTs)   && item.date > toTs)   return false;
+      return true;
+    });
+  }, [data, filterValues]);
+
   const filterFields = useMemo<FilterField<HistoryListItem>[]>(() => [
-    { key: 'date',       extract: (item) => formatTimestamp(item.date) },
     { key: 'username',   extract: (item) => employeeMap.get(item.userId) ?? item.userId, matchMode: 'exact' },
     { key: 'objectType', extract: (item) => item.objectType },
     { key: 'action',     extract: (item) => item.actionType,  matchMode: 'exact' },
@@ -78,7 +91,7 @@ export default function HistoryPage() {
   }), [employeeMap]);
 
   const listOps = useListOperations<HistoryListItem>({
-    data,
+    data: dateRangeFiltered,
     searchFields: (item) => [
       item.objectType,
       item.actionType,

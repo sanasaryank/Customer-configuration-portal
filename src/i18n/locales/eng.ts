@@ -46,6 +46,7 @@ const eng = {
     filters: 'Filters',
     clearSearch: 'Clear',
     all: 'All',
+    update: 'Update',
   },
 
   // Auth
@@ -63,6 +64,8 @@ const eng = {
     customers: 'Customers',
     products: 'Products',
     history: 'History',
+    historyActions: 'Actions',
+    historyLicenseMoving: 'License Moving',
     handbooks: 'Handbooks',
     employees: 'Employees',
     workingDays: 'Working Days',
@@ -74,7 +77,6 @@ const eng = {
     productGroups: 'Product Groups',
     customerGroups: 'Customer Groups',
     customerStatus: 'Customer Status',
-    licenseTypes: 'License Types',
     countries: 'Countries',
     cities: 'Cities',
     districts: 'Districts',
@@ -180,6 +182,7 @@ const eng = {
     username: 'Username',
     password: 'Password',
     licenseType: 'License Type',
+    endDate: 'End Date',
     hardwareKey: 'Hardware Key',
     licenseKey: 'License Key',
     productId: 'Product',
@@ -187,6 +190,7 @@ const eng = {
     moveLicenseTitle: 'Move License to Another Customer',
     moveLicenseFrom: 'Source customer',
     moveLicenseConfirm: 'Move License',
+    moveLicenseProduct: 'Select product to move',
     renewLicense: 'Renew License',
     renewLicenseTitle: 'Renew License',
     renewLicenseConfirm: 'Renew',
@@ -199,6 +203,14 @@ const eng = {
     productTypes: 'Product Types',
     lastUpdate: 'Last Update',
     passwordHint: 'Leave empty to keep existing password',
+  },
+
+  // License Types
+  licenseTypes: {
+    monthly: 'Monthly',
+    yearly: 'Yearly',
+    manual: 'Manual',
+    lifetime: 'Lifetime',
   },
 
   // Working days
@@ -215,6 +227,8 @@ const eng = {
   history: {
     title: 'History',
     date: 'Date',
+    dateFrom: 'Date From',
+    dateTo: 'Date To',
     user: 'User',
     actionType: 'Action',
     objectType: 'Object Type',
@@ -228,6 +242,20 @@ const eng = {
     details: 'History Details',
     noChanges: 'No changes recorded',
     showAll: 'Show all history',
+  },
+
+  // License Moving History
+  licenseMoving: {
+    title: 'License Moving History',
+    detailTitle: 'License Move Details',
+    licenseData: 'License Data',
+    dateFrom: 'Date From',
+    dateTo: 'Date To',
+    from: 'From',
+    to: 'To',
+    user: 'User',
+    product: 'Product',
+    licenseId: 'License ID',
   },
 
   // Dictionary (generic)

@@ -208,7 +208,8 @@ GET /customers/{id}
 POST /customers
 PUT /customers/{id}
 DELETE /customers/{id}
-POST /customers/moveLicense/{dstId}  body: { srcId: string }
+POST /customers/moveLicense/{dstId}  body: { srcId: string, productId: string }
+POST /customers/renewLicense/{customerId}  body: [{ productId: string, endDate: number }]
 4.3 Working days
 GET /workingDays/{countryId}
 POST /workingDays/{countryId}
@@ -216,6 +217,7 @@ POST /workingDays/{countryId}
 GET /history
 GET /history/{objectId}
 GET /historyItem/{id}
+GET /moveLicense
 4.5 Dictionaries
 GET /dictionary/integrationTypes
 GET /dictionary/integrationTypes/{id}
@@ -419,6 +421,7 @@ frontend should allow assigning user products only for products where hasUsers =
 5.7.1 Response shape
 {
   "id": "string",
+  "lastUpdated": 1710000000,
   "generalInfo": {
     "responsibleId": "string",
     "statusId": "string",
@@ -457,12 +460,11 @@ frontend should allow assigning user products only for products where hasUsers =
     "products": [
       {
         "productId": "string",
+        "licenseTypeId": "monthly | yearly | manual | lifetime",
+        "endDate": 1735600000,
         "hardwareKey": "string",
         "licenseKey": "string",
-        "licenseData": {
-          "connectionsCount": 5,
-          "endDate": "2026-12-31"
-        },
+        "licenseData": {},
         "connectionInfo": {
           "connectionTypeId": "string",
           "host": "string",
@@ -499,6 +501,8 @@ licenseInfo.products[].connectionInfo.serverPassword
 licenseInfo.products[].connectionInfo.password
 users[].password
 
+Note: lastUpdated is a read-only field set by the backend; it must not be sent in write payloads.
+
 These are never returned in any GET/POST-response/PUT-response.
 
 5.7.3 Reference rules
@@ -525,12 +529,11 @@ licenseInfo.products[] item:
 
 {
   "productId": "string",
+  "licenseTypeId": "monthly | yearly | manual | lifetime",
+  "endDate": 1735600000,
   "hardwareKey": "string",
   "licenseKey": "string",
-  "licenseData": {
-    "connectionsCount": 5,
-    "endDate": "2026-12-31"
-  },
+  "licenseData": {},
   "connectionInfo": {
     "connectionTypeId": "string",
     "host": "string",
@@ -540,8 +543,18 @@ licenseInfo.products[] item:
   }
 }
 
+licenseTypeId values:
+  monthly  — license renewed monthly
+  yearly   — license renewed yearly
+  manual   — manually managed license
+  lifetime — permanent license, never renewed
+
+endDate is a Unix timestamp in seconds (top-level field, not inside licenseData).
+
 Validation rules:
 
+licenseTypeId is required
+endDate is required (converted from YYYY-MM-DD date input to Unix timestamp in write payload)
 licenseData keys must match licenseTemplate[].name of the corresponding product
 value type must match licenseTemplate[].kind
 required keys must match licenseTemplate[].required = true
@@ -551,18 +564,41 @@ Dynamic behavior:
 Products are added/removed directly in licenseInfo.products[] via the License Info tab in the customer form.
 Frontend creates a new empty license block when user adds a product via the "Add Product" selector.
 Frontend allows removing a license block entirely when user removes a product.
+Each product block contains its own connectionInfo fields; a "copy connection from" helper allows copying connection details from another product block.
 License transfer:
-  POST /customers/moveLicense/{dstId} with body { srcId } moves the license from the source customer to the destination customer
+  POST /customers/moveLicense/{dstId} with body { srcId, productId } moves one specific product license from the source customer to the destination customer
   The "Move License" action is available per-customer in the customer list
-  A customer picker modal opens, allowing search by name; the source customer is excluded from the listbackend is responsible for actual removal/cleanup
+  A product selector appears first (required when source customer has multiple products)
+  A customer picker modal opens, allowing search by name; the source customer is excluded from the list
+  backend is responsible for actual removal/cleanup
+License renewal:
+  POST /customers/renewLicense/{customerId} with body [{ productId, endDate }] renews selected product licenses
+  The "Renew License" action is available per-customer in the customer list
+  lifetime products are excluded from renewal (not shown in the renewal modal)
+  For monthly and yearly license types, an auto end-date button computes the next renewal date:
+    Starting from the 15th of the target month, find the first Tue/Wed/Thu where the next calendar day is also a working day (weekday, not in the country's non-working day list)
+    Frontend loads non-working days via GET /workingDays/{countryId} using the customer's contactInfo.geo.countryId
 5.7.6 Customer list display mapping
 
 In customer table display:
 
-group = resolved name by generalInfo.groupId
-productTypes = resolved names from licenseInfo.products[].productId
+id — not shown as a column (displayed in the edit modal title)
+name = resolved from generalInfo.name (localized); truncated with tooltip if overflowing; max column width applied
+group = resolved name by generalInfo.groupId; truncated with tooltip if overflowing; max column width applied
+productTypes = displayed as colored abbreviation chips (not plain text):
+  Each product gets a stable 2–3 letter abbreviation derived from its display name (initials-first strategy, falling back to first 3 chars of name, then first chars of id)
+  Abbreviation uniqueness is guaranteed within the full product set — no two products share the same chip label
+  Each product gets a deterministic color (10 distinct Tailwind color pairs) derived from its id — same product always renders the same color and label across all customer rows
+  Hovering a chip shows the full product name as a tooltip
+  max column width applied
 status = resolved name by generalInfo.statusId
 isBlocked = generalInfo.isBlocked
+endDate = minimum endDate across all licenseInfo.products[], formatted as a timestamp; color-coded:
+  past → dark red
+  within 7 days → red
+  otherwise → green
+  no products → dash
+lastUpdated = formatted Unix timestamp from top-level lastUpdated field
 5.8 Working days
 GET /workingDays/{countryId}
 ["2025-01-01", "2025-01-02"]
@@ -602,6 +638,7 @@ History endpoints
 GET /history -> all history list items
 GET /history/{objectId} -> history list items only for one object
 GET /historyItem/{id} -> diff array
+GET /moveLicense -> all license moving history items
 History details response
 
 GET /historyItem/{id} returns a single nested diff object:
@@ -634,6 +671,36 @@ GET /historyItem/{id} returns a single nested diff object:
 A node is a leaf diff node when it contains exactly the keys "old" and "new".
 All other non-empty objects are nested diff nodes.
 Array-item match label keys (id=..., new:..., old:..., best_match#...) are backend-generated identifiers, not entity field names, and must be rendered as group headers.
+5.10 License Moving History
+GET /moveLicense response item
+{
+  "date": 1710000000,
+  "from": "customerId",
+  "to": "customerId",
+  "user": "employeeId",
+  "license": {
+    "productId": "string",
+    "licenseTypeId": "monthly | yearly | manual | lifetime",
+    "endDate": 1735600000,
+    "hardwareKey": "string",
+    "licenseKey": "string",
+    "licenseData": {},
+    "connectionInfo": {
+      "connectionTypeId": "string",
+      "host": "string",
+      "port": 8020,
+      "serverUsername": "string",
+      "username": "string"
+    }
+  }
+}
+
+Rules:
+
+date is Unix timestamp in seconds
+from / to are customer IDs; frontend resolves to customer names
+user is employee ID; frontend resolves to employee username
+license matches the CustomerLicenseProduct shape
 6. Date and time rules
 6.1 Unix timestamp unit
 
@@ -679,7 +746,8 @@ Implement at least these routes:
 /handbooks/cities
 /handbooks/districts
 /products
-/history
+/history/actions
+/history/licenseMoving
 8.2 List pages
 
 Every list page should support:
@@ -711,12 +779,18 @@ mark day as non-working via POST /workingDays/{countryId} with action add
 mark day as working via POST /workingDays/{countryId} with action remove
 8.5 History UI
 
+History is split into two sub-pages under an expandable "History" nav group:
+
+8.5.1 Actions (/history/actions)
+
 History page must support:
 
 global history list using GET /history
 object-specific history access using GET /history/{objectId}
 opening details of a single history item via GET /historyItem/{id}
 display username by resolving userId
+filters: Date From (date picker), Date To (date picker), User (select), Object Type (text), Action (select: create/update/delete)
+date range filtering applied as pre-filter on Unix timestamp: dateFrom and dateTo values are YYYY-MM-DD date inputs converted to Unix seconds
 recursively render the nested diff tree returned by GET /historyItem/{id}:
   leaf diff nodes render as old/new value rows
   nested diff nodes render as labelled indented sections
@@ -724,6 +798,16 @@ recursively render the nested diff tree returned by GET /historyItem/{id}:
   the string "<missing>" renders as a styled missing-value marker
   atomic array values (old/new are arrays) render as formatted JSON blocks
   password diffs display the provided old/new strings without any reveal logic
+
+8.5.2 License Moving (/history/licenseMoving)
+
+License moving history page must support:
+
+list of license move events from GET /moveLicense
+columns: Date, From (customer name), To (customer name), User (employee username), Product (product name), Actions
+view action opens a detail modal showing the full license move record as a flat JSON tree
+filters: Date From (date picker), Date To (date picker), From (select), To (select), User (select), Product (select), License ID (text)
+date range filtering applied as pre-filter on Unix timestamp
 9. Suggested frontend behavior for AI implementation
 9.1 Data layer
 
@@ -823,27 +907,64 @@ description
 editable licenseTemplate[]
 10.6 Customers page
 
-Main complexity page. Use tabbed or sectioned modal:
+Columns:
 
-general info
-contact info
-connection info
-products
-license info
-users
+id
+name (localized)
+group (resolved from generalInfo.groupId)
+productTypes (resolved from licenseInfo.products[].productId)
+status (resolved from generalInfo.statusId)
+lastUpdated (formatted timestamp)
 
-Important behaviors:
+Row actions:
 
-responsible employee selector
-customer status selector
-customer group selector
-geo selectors with linked country/city/district
-connection type selector
-products multiselect
-users subtable/subforms
-users allowedProducts filtered by hasUsers = true
-license blocks by product
-disable stale license blocks for removed products
+edit
+block/unblock (toggles generalInfo.isBlocked via PUT)
+renew license (opens RenewLicense modal)
+move license (opens MoveLicense modal)
+history (navigates to history page filtered by objectId)
+
+Note: delete is not implemented for customers.
+
+Main complexity page. Use tabbed modal with 4 vertical tabs:
+
+General Info tab:
+  localized name (ARM/ENG/RUS)
+  localized legalName
+  responsible employee selector
+  customer status selector
+  customer group selector
+  brandName, tin, bankAccount, crmLink inputs
+  description textarea
+  isBlocked checkbox (in form footer)
+
+Contact Info tab:
+  phone, email inputs
+  address, legalAddress textareas
+  geo block: country/city/district linked selectors (country -> city -> district)
+  lat/lng number inputs
+
+License Info tab:
+  collapsible per-product blocks (add via selector, remove via ✕ button)
+  each block contains:
+    licenseTypeId select (monthly/yearly/manual/lifetime — required)
+    endDate date input (required; stored as Unix timestamp in payload)
+    hardwareKey, licenseKey text inputs
+    licenseData fields driven by product.licenseTemplate (kind-based input types)
+    connectionInfo block:
+      connectionTypeId select (integration types)
+      host, port, serverUsername, username inputs
+      serverPassword, password fields (write-only, never pre-filled)
+      "copy connection from" helper to copy connection from another product block
+
+Users tab:
+  user sub-forms (add/remove)
+  each user contains:
+    localized name
+    username (required), restoreEmail
+    password (required for new users, optional for existing)
+    allowedProducts checkboxes — filtered to products in licenseInfo.products[] where hasUsers = true
+    isBlocked checkbox
 10.7 History page
 
 Columns:
@@ -865,6 +986,10 @@ Do not delete customer license blocks on frontend when product is removed
 Do not create separate CRUD for customer users
 Do not implement backend paging/filtering assumptions
 Do not invent extra endpoints for block/history/logout
+Do not include lastUpdated in customer write payloads
+Do not place endDate inside licenseData — it is a top-level license product field
+Do not offer license renewal for products with licenseTypeId = "lifetime"
+Do not move a license without selecting a specific productId when the customer has multiple products
 12. Final implementation directive for AI
 
 Generate a production-ready frontend that follows this contract exactly. Prefer clear modular architecture, reusable CRUD patterns, centralized i18n, and safe form handling. Where possible, abstract shared logic, but keep entity-specific business rules explicit for:

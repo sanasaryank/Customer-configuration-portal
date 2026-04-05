@@ -47,6 +47,7 @@ const arm = {
     filters: 'Զտիչներ',
     clearSearch: 'Մաքրել',
     all: 'Բոլորը',
+    update: 'Թարմացնել',
   },
 
   // Նույնականացում
@@ -64,6 +65,8 @@ const arm = {
     customers: 'Հաճախորդներ',
     products: 'Պրոդուկտներ',
     history: 'Պատմություն',
+    historyActions: 'Գործողություններ',
+    historyLicenseMoving: 'Լիցենզիայի տեղաշարժ',
     handbooks: 'Տեղեկատուներ',
     employees: 'Աշխատակիցներ',
     workingDays: 'Աշխատանքային օրեր',
@@ -75,7 +78,6 @@ const arm = {
     productGroups: 'Պրոդուկտների խմբեր',
     customerGroups: 'Հաճախորդների խմբեր',
     customerStatus: 'Հաճախորդի կարգավիճակ',
-    licenseTypes: 'Լիցենզիաների տեսակներ',
     countries: 'Երկրներ',
     cities: 'Քաղաքներ',
     districts: 'Շրջաններ',
@@ -181,6 +183,7 @@ const arm = {
     username: 'Օգտանուն',
     password: 'Գաղտնաբառ',
     licenseType: 'Լիցենզիայի տեսակ',
+    endDate: 'Ավարտի ամսաթիվ',
     hardwareKey: 'Սարքային բանալի',
     licenseKey: 'Լիցենզիայի բանալի',
     productId: 'Պրոդուկտ',
@@ -188,6 +191,7 @@ const arm = {
     moveLicenseTitle: 'Լիցենզիայի տեղափոխում',
     moveLicenseFrom: 'Աղբյուր հաճախորդ',
     moveLicenseConfirm: 'Տեղափոխել',
+    moveLicenseProduct: 'Ընտրեք արտադրանքը տեղափոխելու համար',
     renewLicense: 'Նորոգել լիցենզիան',
     renewLicenseTitle: 'Լիցենզիայի նորոգում',
     renewLicenseConfirm: 'Նորոգել',
@@ -200,6 +204,14 @@ const arm = {
     productTypes: 'Պրոդուկտների տեսակներ',
     lastUpdate: 'Վերջին թարմացում',
     passwordHint: 'Թողնել դատարկ՝ առկա գաղտնաբառը պահպանելու համար',
+  },
+
+  // Լիցենզիայի տեսակներ
+  licenseTypes: {
+    monthly: 'Ամսական',
+    yearly: 'Տարեկան',
+    manual: 'Ձեռնական',
+    lifetime: 'Անժամկետ',
   },
 
   // Աշխատանքային օրեր
@@ -216,6 +228,8 @@ const arm = {
   history: {
     title: 'Պատմություն',
     date: 'Ամսաթիվ',
+    dateFrom: 'Ամսաթիվ (սկիզբ)',
+    dateTo: 'Ամսաթիվ (վերջ)',
     user: 'Օգտատեր',
     actionType: 'Գործողություն',
     objectType: 'Օբյեկտի տեսակ',
@@ -229,6 +243,20 @@ const arm = {
     details: 'Պատմության մանրամասներ',
     noChanges: 'Փոփոխություններ գրանցված չեն',
     showAll: 'Ցուցադրել ամբողջ պատմությունը',
+  },
+
+  // Լիցենզիայի տեղաշարժի պատմություն
+  licenseMoving: {
+    title: 'Լիցենզիայի տեղաշարժի պատմություն',
+    detailTitle: 'Տեղաշարժի մանրամասներ',
+    licenseData: 'Լիցենզիայի տվյալներ',
+    dateFrom: 'Ամսաթիվ (սկիզբ)',
+    dateTo: 'Ամսաթիվ (վերջ)',
+    from: 'Ումից',
+    to: 'Ում',
+    user: 'Օգտատեր',
+    product: 'Պրոդուկտ',
+    licenseId: 'Լիցենզիայի ID',
   },
 
   // Տեղեկատու (ընդհանուր)

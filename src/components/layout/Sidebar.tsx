@@ -22,11 +22,16 @@ interface NavGroup {
 export function Sidebar({ isOpen }: SidebarProps) {
   const { t } = useTranslation();
   const [handbooksOpen, setHandbooksOpen] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(true);
 
   const topNav: NavItem[] = [
     { label: t('nav.customers'), path: ROUTES.CUSTOMERS },
     { label: t('nav.products'), path: ROUTES.PRODUCTS },
-    { label: t('nav.history'), path: ROUTES.HISTORY },
+  ];
+
+  const historyItems: NavItem[] = [
+    { label: t('nav.historyActions'), path: ROUTES.HISTORY_ACTIONS },
+    { label: t('nav.historyLicenseMoving'), path: ROUTES.HISTORY_LICENSE_MOVING },
   ];
 
   const handbooks: NavItem[] = [
@@ -40,7 +45,6 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { label: t('nav.productGroups'), path: ROUTES.PRODUCT_GROUPS },
     { label: t('nav.customerGroups'), path: ROUTES.CUSTOMER_GROUPS },
     { label: t('nav.customerStatus'), path: ROUTES.CUSTOMER_STATUS },
-    { label: t('nav.licenseTypes'), path: ROUTES.LICENSE_TYPES },
     { label: t('nav.countries'), path: ROUTES.COUNTRIES },
     { label: t('nav.cities'), path: ROUTES.CITIES },
     { label: t('nav.districts'), path: ROUTES.DISTRICTS },
@@ -65,6 +69,25 @@ export function Sidebar({ isOpen }: SidebarProps) {
         {topNav.map((item) => (
           <SidebarLink key={item.path} {...item} />
         ))}
+
+        {/* History section */}
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={() => setHistoryOpen((v) => !v)}
+            className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-400 hover:text-gray-200 transition-colors"
+          >
+            <span>{t('nav.history')}</span>
+            <span className="text-xs">{historyOpen ? '▾' : '▸'}</span>
+          </button>
+          {historyOpen && (
+            <div className="space-y-1 mt-1">
+              {historyItems.map((item) => (
+                <SidebarLink key={item.path} {...item} indent />
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Handbooks section */}
         <div className="pt-2">

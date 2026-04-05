@@ -35,3 +35,16 @@ export type NestedDiffNode = {
 
 // GET /historyItem/{id} response — nested diff object
 export type HistoryDetail = NestedDiffNode;
+
+// ── License moving history ─────────────────────────────────────────────────
+
+import type { CustomerLicenseProduct } from './customer';
+
+// Item in GET /history/licenseMoving response
+export interface LicenseMovingItem {
+  date: number;       // Unix timestamp in SECONDS
+  from: string;       // customerId
+  to: string;         // customerId
+  user: string;       // employeeId
+  license: CustomerLicenseProduct;
+}

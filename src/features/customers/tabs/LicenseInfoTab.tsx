@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { getProducts } from '../../../api/products';
@@ -8,10 +8,12 @@ import { queryKeys } from '../../../queryKeys';
 import { useAuth } from '../../../providers/AuthProvider';
 import type { CustomerFormValues } from '../../../types/customer';
 import type { LicenseTemplateField } from '../../../types/product';
+import { LICENSE_TYPE_IDS } from '../../../constants/licenseTypes';
 import { resolveTranslation } from '../../../utils/translation';
 import { Input } from '../../../components/ui/Input';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import { Button } from '../../../components/ui/Button';
+import { Select } from '../../../components/ui/Select';
 import { DictionarySelect } from '../../../components/form/DictionarySelect';
 import { PasswordField } from '../../../components/form/PasswordField';
 
@@ -155,10 +157,10 @@ export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
     queryFn: getProducts,
   });
 
-  const { data: licenseTypes = [] } = useQuery({
-    queryKey: queryKeys.dict('licenseTypes'),
-    queryFn: () => getDictionary('licenseTypes'),
-  });
+  const licenseTypeOptions = LICENSE_TYPE_IDS.map((id) => ({
+    value: id,
+    label: t(`licenseTypes.${id}`),
+  }));
 
   const productMap = React.useMemo(
     () => new Map((Array.isArray(allProducts) ? allProducts : []).map((p) => [p.id, p])),
@@ -194,7 +196,7 @@ export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
   const handleAddProduct = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const productId = e.target.value;
     if (!productId) return;
-    append({ productId, licenseTypeId: '', hardwareKey: '', licenseKey: '', licenseData: {}, connectionInfo: { ...EMPTY_CONNECTION } });
+    append({ productId, licenseTypeId: '', endDate: '', hardwareKey: '', licenseKey: '', licenseData: {}, connectionInfo: { ...EMPTY_CONNECTION } });
     setSelectValue('');
   };
 
@@ -244,11 +246,25 @@ export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
             {isExpanded && (
               <div className="px-3 py-3 space-y-3 border-t border-gray-100">
                 {/* License fields */}
-                <DictionarySelect
+                <Controller
+                  control={control}
                   name={`licenseInfo.products.${index}.licenseTypeId`}
-                  label={t('customers.licenseType')}
-                  items={licenseTypes}
-                  lang={lang}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      id={`licenseInfo.products.${index}.licenseTypeId`}
+                      label={t('customers.licenseType')}
+                      options={licenseTypeOptions}
+                      placeholder="— Select —"
+                      required
+                    />
+                  )}
+                />
+                <Input
+                  label={t('customers.endDate')}
+                  type="date"
+                  required
+                  {...register(`licenseInfo.products.${index}.endDate`)}
                 />
                 <Input
                   label={t('customers.hardwareKey')}

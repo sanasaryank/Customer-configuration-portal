@@ -209,7 +209,7 @@ export default function DictionaryPage({ dictKey }: DictionaryPageProps) {
         <RowActions actions={[
           { key: 'edit',    icon: <IconEdit />,                                   title: t('common.edit'),    onClick: () => setModalEditId(row.id) },
           { key: 'block',   icon: row.isBlocked ? <IconLock /> : <IconUnlock />, title: row.isBlocked ? t('common.unblock') : t('common.block'), variant: row.isBlocked ? 'warning' : 'default', onClick: () => blockMutation.mutate({ id: row.id, isBlocked: !row.isBlocked }) },
-          { key: 'history', icon: <IconHistory />,                                title: t('common.history'), onClick: () => navigate(`${ROUTES.HISTORY}?objectId=${row.id}`) },
+          { key: 'history', icon: <IconHistory />,                                title: t('common.history'), onClick: () => navigate(`${ROUTES.HISTORY_ACTIONS}?objectId=${row.id}`) },
         ]} />
       ),
     },

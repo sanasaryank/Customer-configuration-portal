@@ -21,8 +21,10 @@ export const ENDPOINTS = {
   WORKING_DAYS: '/workingDays',
 
   // History
-  HISTORY: '/history',
+  HISTORY_ACTIONS: '/history',
+  HISTORY_ACTIONS_BY_OBJECT: '/history',
   HISTORY_ITEM: '/historyItem',
+  HISTORY_LICENSE_MOVING: '/moveLicense',
 
   // Dictionaries
   DICT_INTEGRATION_TYPES: '/dictionary/integrationTypes',
@@ -33,7 +35,6 @@ export const ENDPOINTS = {
   DICT_PRODUCT_GROUPS: '/dictionary/productGroups',
   DICT_CUSTOMER_GROUPS: '/dictionary/customerGroups',
   DICT_CUSTOMER_STATUS: '/dictionary/customerStatus',
-  DICT_LICENSE_TYPES: '/dictionary/licenseTypes',
   DICT_COUNTRIES: '/dictionary/countries',
   DICT_CITIES: '/dictionary/cities',
   DICT_DISTRICTS: '/dictionary/districts',
@@ -50,7 +51,6 @@ export const DICT_ENDPOINT_MAP: Record<DictionaryKey, string> = {
   productGroups: ENDPOINTS.DICT_PRODUCT_GROUPS,
   customerGroups: ENDPOINTS.DICT_CUSTOMER_GROUPS,
   customerStatus: ENDPOINTS.DICT_CUSTOMER_STATUS,
-  licenseTypes: ENDPOINTS.DICT_LICENSE_TYPES,
   countries: ENDPOINTS.DICT_COUNTRIES,
   cities: ENDPOINTS.DICT_CITIES,
   districts: ENDPOINTS.DICT_DISTRICTS,

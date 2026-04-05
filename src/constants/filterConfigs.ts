@@ -8,7 +8,7 @@ export interface FilterOption {
   labelKey?: string;
 }
 
-export type FilterFieldType = 'text' | 'switch' | 'select';
+export type FilterFieldType = 'text' | 'date' | 'switch' | 'select';
 
 export interface FilterFieldConfig {
   key: string;
@@ -44,8 +44,9 @@ export const FILTER_CONFIGS: Record<string, FilterFieldConfig[]> = {
     { key: 'name',      labelKey: 'common.name',    type: 'text' },
     STATUS_SWITCH,
   ],
-  [ROUTES.HISTORY]: [
-    { key: 'date',       labelKey: 'history.date',       type: 'text' },
+  [ROUTES.HISTORY_ACTIONS]: [
+    { key: 'dateFrom',   labelKey: 'history.dateFrom',   type: 'date' },
+    { key: 'dateTo',     labelKey: 'history.dateTo',     type: 'date' },
     { key: 'username',   labelKey: 'history.user',       type: 'select' },
     { key: 'objectType', labelKey: 'history.objectType', type: 'text' },
     {
@@ -56,6 +57,15 @@ export const FILTER_CONFIGS: Record<string, FilterFieldConfig[]> = {
         { value: 'delete', labelKey: 'history.delete' },
       ],
     },
+  ],
+  [ROUTES.HISTORY_LICENSE_MOVING]: [
+    { key: 'dateFrom',   labelKey: 'licenseMoving.dateFrom',  type: 'date' },
+    { key: 'dateTo',     labelKey: 'licenseMoving.dateTo',    type: 'date' },
+    { key: 'from',       labelKey: 'licenseMoving.from',      type: 'select' },
+    { key: 'to',         labelKey: 'licenseMoving.to',        type: 'select' },
+    { key: 'user',       labelKey: 'licenseMoving.user',      type: 'select' },
+    { key: 'product',    labelKey: 'licenseMoving.product',   type: 'select' },
+    { key: 'licenseId',  labelKey: 'licenseMoving.licenseId', type: 'text' },
   ],
   [ROUTES.EMPLOYEES]: [
     { key: 'name', labelKey: 'common.name', type: 'text' },

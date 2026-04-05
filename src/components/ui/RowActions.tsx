@@ -50,8 +50,14 @@ export function IconMoveLicense() {
 export function IconRenewLicense() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M13.5 2.5A6.5 6.5 0 1 1 5 3.5" />
-      <path d="M2 1v4h4" />
+      {/* Calendar body */}
+      <rect x="1.5" y="3" width="13" height="11.5" rx="1.2" />
+      {/* Top bar */}
+      <path d="M1.5 6.5h13" />
+      {/* Hanging ticks */}
+      <path d="M5 1.5v3M11 1.5v3" />
+      {/* Plus sign in lower-right */}
+      <path d="M10 10.5h3M11.5 9v3" />
     </svg>
   );
 }

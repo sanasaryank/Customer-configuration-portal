@@ -25,6 +25,7 @@ import { Spinner } from '../../components/ui/Spinner';
 import { RowActions, IconEdit, IconLock, IconUnlock, IconHistory, IconMoveLicense, IconRenewLicense } from '../../components/ui/RowActions';
 import CustomerModal from './CustomerModal';
 import MoveLicenseModal from './MoveLicenseModal';
+import type { MoveLicenseProduct } from './MoveLicenseModal';
 import RenewLicenseModal from './RenewLicenseModal';
 import type { RenewLicenseProduct } from './RenewLicenseModal';
 import { useNavigate } from 'react-router-dom';
@@ -37,8 +38,8 @@ export default function CustomersPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [modalEditId, setModalEditId] = useState<string | null | undefined>(undefined);
-  const [moveLicenseSrc, setMoveLicenseSrc] = useState<{ id: string; name: string } | null>(null);
-  const [renewLicenseSrc, setRenewLicenseSrc] = useState<{ id: string; name: string; products: RenewLicenseProduct[] } | null>(null);
+  const [moveLicenseSrc, setMoveLicenseSrc] = useState<{ id: string; name: string; products: MoveLicenseProduct[] } | null>(null);
+  const [renewLicenseSrc, setRenewLicenseSrc] = useState<{ id: string; name: string; products: RenewLicenseProduct[]; countryId: string } | null>(null);
   const filterValues = useFilterValues();
 
   const { data = [], isLoading } = useQuery({
@@ -101,6 +102,12 @@ export default function CustomersPage() {
     name: (item) => resolveTranslation(item.generalInfo?.name, lang),
     group: (item) => resolveId(item.generalInfo?.groupId, groupMap),
     productTypes: (item) => resolveIds((item.licenseInfo?.products ?? []).map((p) => p.productId), productMap),
+    endDate: (item) => {
+      const dates = (item.licenseInfo?.products ?? [])
+        .map((p) => p.endDate)
+        .filter((d): d is number => typeof d === 'number' && d > 0);
+      return dates.length === 0 ? '0' : String(Math.min(...dates));
+    },
     status: (item) => resolveId(item.generalInfo?.statusId, statusMap),
     isBlocked: (item) => String(item.generalInfo?.isBlocked),
     lastUpdated: (item) => String(item.lastUpdated ?? 0),
@@ -123,25 +130,157 @@ export default function CustomersPage() {
     listOps.setSort({ key, direction: listOps.sort?.key === key && listOps.sort.direction === 'asc' ? 'desc' : 'asc' });
   }, [listOps]);
 
+  // ── Product chip helpers ──────────────────────────────────────────────────
+
+  // 10 visually distinct color pairs [bg, text] using Tailwind classes
+  const CHIP_COLORS = [
+    'bg-blue-100 text-blue-800',
+    'bg-purple-100 text-purple-800',
+    'bg-emerald-100 text-emerald-800',
+    'bg-orange-100 text-orange-800',
+    'bg-rose-100 text-rose-800',
+    'bg-cyan-100 text-cyan-800',
+    'bg-yellow-100 text-yellow-800',
+    'bg-fuchsia-100 text-fuchsia-800',
+    'bg-teal-100 text-teal-800',
+    'bg-indigo-100 text-indigo-800',
+  ] as const;
+
+  // Deterministic hash of product id -> stable color index
+  function chipColorClass(productId: string): string {
+    let h = 0;
+    for (let i = 0; i < productId.length; i++) h = (Math.imul(31, h) + productId.charCodeAt(i)) | 0;
+    return CHIP_COLORS[Math.abs(h) % CHIP_COLORS.length]!;
+  }
+
+  // Build a stable 2-3 letter abbreviation for every product, guaranteed unique within the set.
+  // Always derived from Latin-script names (ENG first) so abbreviations are legible in any UI language.
+  const productAbbrMap = React.useMemo((): Map<string, string> => {
+    const result = new Map<string, string>();
+    const used = new Map<string, string>(); // abbr -> first productId that claimed it
+
+    // Pick a Latin-script source name: ENG > RUS > ARM, whichever has Latin chars first
+    const latinName = (id: string): string => {
+      const p = (Array.isArray(products) ? products : []).find((x) => x.id === id);
+      if (!p) return id;
+      for (const key of ['ENG', 'RUS', 'ARM'] as const) {
+        const v = p.name[key];
+        if (v && /[A-Za-z]/.test(v)) return v;
+      }
+      // No Latin translation — fall back to the first non-empty translation
+      return p.name.ENG || p.name.RUS || p.name.ARM || id;
+    };
+
+    const tryAbbr = (id: string, candidate: string) => {
+      const upper = candidate.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3);
+      if (!upper) return null;
+      if (!used.has(upper)) {
+        used.set(upper, id);
+        result.set(id, upper);
+        return upper;
+      }
+      return null;
+    };
+
+    const ids = (Array.isArray(products) ? products : []).map((p) => p.id);
+
+    // First pass: initials from words (e.g. "Point Of Sale" -> "POS")
+    for (const id of ids) {
+      const name = latinName(id);
+      const words = name.trim().split(/\s+/);
+      const initials = words.map((w) => w[0] ?? '').join('').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (initials.length >= 2) {
+        tryAbbr(id, initials.slice(0, 3));
+      }
+    }
+
+    // Second pass: first 3 chars of Latin name for anything not yet assigned
+    for (const id of ids) {
+      if (result.has(id)) continue;
+      tryAbbr(id, latinName(id).slice(0, 3));
+    }
+
+    // Third pass: first chars of id as last resort
+    for (const id of ids) {
+      if (result.has(id)) continue;
+      for (let len = 2; len <= id.length; len++) {
+        const candidate = id.slice(0, len).toUpperCase();
+        if (!used.has(candidate)) {
+          used.set(candidate, id);
+          result.set(id, candidate);
+          break;
+        }
+      }
+      if (!result.has(id)) result.set(id, id.slice(0, 3).toUpperCase());
+    }
+
+    return result;
+  }, [products]);
+
+  const NOW_S = Math.floor(Date.now() / 1000);
+  const SEVEN_DAYS_S = 7 * 24 * 60 * 60;
+
   const columns: TableColumn<CustomerListItem>[] = [
-    { key: 'id', header: t('common.id'), sortable: true, render: (row) => row.id },
     {
       key: 'name',
       header: t('common.name'),
       sortable: true,
-      render: (row) => resolveTranslation(row.generalInfo?.name, lang),
+      className: 'max-w-[180px]',
+      render: (row) => (
+        <span className="block truncate max-w-[180px]" title={resolveTranslation(row.generalInfo?.name, lang)}>
+          {resolveTranslation(row.generalInfo?.name, lang)}
+        </span>
+      ),
     },
     {
       key: 'group',
       header: t('customers.groupId'),
       sortable: true,
-      render: (row) => resolveId(row.generalInfo?.groupId, groupMap),
+      className: 'max-w-[140px]',
+      render: (row) => (
+        <span className="block truncate max-w-[140px]" title={resolveId(row.generalInfo?.groupId, groupMap)}>
+          {resolveId(row.generalInfo?.groupId, groupMap)}
+        </span>
+      ),
     },
     {
       key: 'productTypes',
       header: t('customers.productTypes'),
       sortable: true,
-      render: (row) => resolveIds((row.licenseInfo?.products ?? []).map((p) => p.productId), productMap),
+      className: 'max-w-[160px]',
+      render: (row) => {
+        const ids = (row.licenseInfo?.products ?? []).map((p) => p.productId);
+        if (ids.length === 0) return <span className="text-gray-400">—</span>;
+        return (
+          <div className="flex flex-wrap gap-1 max-w-[160px]">
+            {ids.map((id) => (
+              <span
+                key={id}
+                title={productMap.get(id) ?? id}
+                className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold tracking-wide ${chipColorClass(id)}`}
+              >
+                {productAbbrMap.get(id) ?? id.slice(0, 3).toUpperCase()}
+              </span>
+            ))}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'endDate',
+      header: t('customers.endDate'),
+      sortable: true,
+      render: (row) => {
+        const dates = (row.licenseInfo?.products ?? [])
+          .map((p) => p.endDate)
+          .filter((d): d is number => typeof d === 'number' && d > 0);
+        if (dates.length === 0) return <span className="text-gray-400">—</span>;
+        const min = Math.min(...dates);
+        let cls = 'text-green-700 font-medium';
+        if (min < NOW_S) cls = 'text-red-900 font-semibold';
+        else if (min < NOW_S + SEVEN_DAYS_S) cls = 'text-red-600 font-medium';
+        return <span className={cls}>{formatTimestamp(min)}</span>;
+      },
     },
     {
       key: 'status',
@@ -162,9 +301,9 @@ export default function CustomersPage() {
         <RowActions actions={[
           { key: 'edit',          icon: <IconEdit />,                                               title: t('common.edit'),              onClick: () => setModalEditId(row.id) },
           { key: 'block',         icon: row.generalInfo?.isBlocked ? <IconLock /> : <IconUnlock />, title: row.generalInfo?.isBlocked ? t('common.unblock') : t('common.block'), variant: row.generalInfo?.isBlocked ? 'warning' as const : 'default' as const, onClick: () => blockMutation.mutate({ id: row.id, isBlocked: !row.generalInfo?.isBlocked }) },
-          { key: 'renewLicense',  icon: <IconRenewLicense />,                                       title: t('customers.renewLicense'),   onClick: () => setRenewLicenseSrc({ id: row.id, name: resolveTranslation(row.generalInfo?.name, lang), products: (row.licenseInfo?.products ?? []).map((p) => ({ productId: p.productId, name: productMap.get(p.productId) || p.productId })) }) },
-          { key: 'moveLicense',   icon: <IconMoveLicense />,                                        title: t('customers.moveLicense'),    onClick: () => setMoveLicenseSrc({ id: row.id, name: resolveTranslation(row.generalInfo?.name, lang) }) },
-          { key: 'history',       icon: <IconHistory />,                                            title: t('common.history'),           onClick: () => navigate(`${ROUTES.HISTORY}?objectId=${row.id}`) },
+          { key: 'renewLicense',  icon: <IconRenewLicense />,                                       title: t('customers.renewLicense'),   onClick: () => setRenewLicenseSrc({ id: row.id, name: resolveTranslation(row.generalInfo?.name, lang), countryId: row.contactInfo?.geo?.countryId ?? '', products: (row.licenseInfo?.products ?? []).map((p) => ({ productId: p.productId, name: productMap.get(p.productId) || p.productId, licenseTypeId: p.licenseTypeId ?? '', endDate: p.endDate ?? 0 })) }) },
+          { key: 'moveLicense',   icon: <IconMoveLicense />,                                        title: t('customers.moveLicense'),    onClick: () => setMoveLicenseSrc({ id: row.id, name: resolveTranslation(row.generalInfo?.name, lang), products: (row.licenseInfo?.products ?? []).map((p) => ({ productId: p.productId, name: productMap.get(p.productId) || p.productId })) }) },
+          { key: 'history',       icon: <IconHistory />,                                            title: t('common.history'),           onClick: () => navigate(`${ROUTES.HISTORY_ACTIONS}?objectId=${row.id}`) },
         ]} />
       ),
     },
@@ -209,6 +348,7 @@ export default function CustomersPage() {
         <MoveLicenseModal
           srcId={moveLicenseSrc.id}
           srcName={moveLicenseSrc.name}
+          srcProducts={moveLicenseSrc.products}
           onClose={() => setMoveLicenseSrc(null)}
         />
       )}
@@ -218,6 +358,7 @@ export default function CustomersPage() {
           customerId={renewLicenseSrc.id}
           customerName={renewLicenseSrc.name}
           products={renewLicenseSrc.products}
+          countryId={renewLicenseSrc.countryId}
           onClose={() => setRenewLicenseSrc(null)}
         />
       )}

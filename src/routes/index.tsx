@@ -14,6 +14,7 @@ const LoginPage = lazy(() => import('../features/auth/LoginPage'));
 const CustomersPage = lazy(() => import('../features/customers/CustomersPage'));
 const ProductsPage = lazy(() => import('../features/products/ProductsPage'));
 const HistoryPage = lazy(() => import('../features/history/HistoryPage'));
+const LicenseMovingPage = lazy(() => import('../features/history/LicenseMovingPage'));
 const EmployeesPage = lazy(() => import('../features/employees/EmployeesPage'));
 const WorkingDaysPage = lazy(() => import('../features/workingDays/WorkingDaysPage'));
 const DictionaryPage = lazy(() => import('../features/dictionaries/DictionaryPage'));
@@ -61,10 +62,18 @@ function buildRouter() {
             ),
           },
           {
-            path: ROUTES.HISTORY,
+            path: ROUTES.HISTORY_ACTIONS,
             element: (
               <Suspense fallback={<Fallback />}>
                 <HistoryPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: ROUTES.HISTORY_LICENSE_MOVING,
+            element: (
+              <Suspense fallback={<Fallback />}>
+                <LicenseMovingPage />
               </Suspense>
             ),
           },
@@ -171,14 +180,6 @@ function buildRouter() {
             element: (
               <Suspense fallback={<Fallback />}>
                 <DictionaryPage key="customerStatus" dictKey="customerStatus" />
-              </Suspense>
-            ),
-          },
-          {
-            path: ROUTES.LICENSE_TYPES,
-            element: (
-              <Suspense fallback={<Fallback />}>
-                <DictionaryPage key="licenseTypes" dictKey="licenseTypes" />
               </Suspense>
             ),
           },

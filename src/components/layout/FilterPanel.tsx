@@ -96,6 +96,22 @@ export function FilterPanel() {
                 );
               }
 
+              if (fieldType === 'date') {
+                return (
+                  <div key={cfg.key} className="flex flex-col gap-1 px-4 py-2">
+                    <label className="text-xs font-medium text-gray-500 whitespace-nowrap">
+                      {t(cfg.labelKey)}
+                    </label>
+                    <input
+                      type="date"
+                      className="form-input text-sm"
+                      value={currentValue}
+                      onChange={(e) => setFilter(pathname, cfg.key, e.target.value)}
+                    />
+                  </div>
+                );
+              }
+
               // default: text
               return (
                 <div key={cfg.key} className="flex flex-col gap-1 px-4 py-2">

@@ -15,6 +15,7 @@ import type {
   CustomerFormUser,
 } from '../../types/customer';
 import { omitEmptyPasswords } from '../../utils/password';
+import { unixToDateInput, dateInputToUnix } from '../../utils/timestamp';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
@@ -63,6 +64,7 @@ const schema = z.object({
       z.object({
         productId: z.string(),
         licenseTypeId: z.string(),
+        endDate: z.string(),
         hardwareKey: z.string(),
         licenseKey: z.string(),
         licenseData: z.record(z.unknown()),
@@ -128,7 +130,7 @@ function buildCreatePayload(values: CustomerFormValues): CustomerCreatePayload {
     const conn = { ...p.connectionInfo } as Record<string, unknown>;
     if (!conn['serverPassword']) delete conn['serverPassword'];
     if (!conn['password']) delete conn['password'];
-    return { ...p, connectionInfo: conn };
+    return { ...p, endDate: dateInputToUnix(p.endDate), connectionInfo: conn };
   }) as unknown as CustomerCreatePayload['licenseInfo']['products'];
 
   // Omit empty passwords from users
@@ -190,6 +192,7 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
         licenseInfo: {
           products: (Array.isArray(existing.licenseInfo?.products) ? existing.licenseInfo.products : []).map((p) => ({
             ...p,
+            endDate: unixToDateInput(p.endDate),
             connectionInfo: {
               ...p.connectionInfo,
               serverPassword: '', // never prefill write-only
@@ -243,8 +246,8 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
     <Modal
       isOpen
       onClose={onClose}
-      title={isEdit ? t('customers.editTitle') : t('customers.createTitle')}
-      size="2xl"
+      title={isEdit ? `${t('customers.editTitle')} (${existing?.id ?? '…'})` : t('customers.createTitle')}
+      size="4xl"
       footer={
         <>
           <Checkbox

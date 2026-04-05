@@ -36,7 +36,6 @@ export type DictionaryKey =
   | 'productGroups'
   | 'customerGroups'
   | 'customerStatus'
-  | 'licenseTypes'
   | 'countries'
   | 'cities'
   | 'districts';

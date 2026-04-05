@@ -45,6 +45,7 @@ const rus = {
     filters: 'Фильтры',
     clearSearch: 'Очистить',
     all: 'Все',
+    update: 'Обновить',
   },
 
   // Auth
@@ -62,6 +63,8 @@ const rus = {
     customers: 'Клиенты',
     products: 'Продукты',
     history: 'История',
+    historyActions: 'Действия',
+    historyLicenseMoving: 'Перемещение лицензий',
     handbooks: 'Справочники',
     employees: 'Сотрудники',
     workingDays: 'Рабочие дни',
@@ -73,7 +76,6 @@ const rus = {
     productGroups: 'Группы продуктов',
     customerGroups: 'Группы клиентов',
     customerStatus: 'Статус клиента',
-    licenseTypes: 'Типы лицензий',
     countries: 'Страны',
     cities: 'Города',
     districts: 'Районы',
@@ -179,6 +181,7 @@ const rus = {
     username: 'Имя пользователя',
     password: 'Пароль',
     licenseType: 'Тип лицензии',
+    endDate: 'Дата окончания',
     hardwareKey: 'Аппаратный ключ',
     licenseKey: 'Лицензионный ключ',
     productId: 'Продукт',
@@ -186,6 +189,7 @@ const rus = {
     moveLicenseTitle: 'Перемещение лицензии',
     moveLicenseFrom: 'Источник',
     moveLicenseConfirm: 'Переместить',
+    moveLicenseProduct: 'Выберите продукт для перемещения',
     renewLicense: 'Продлить лицензию',
     renewLicenseTitle: 'Продление лицензии',
     renewLicenseConfirm: 'Продлить',
@@ -198,6 +202,14 @@ const rus = {
     productTypes: 'Типы продуктов',
     lastUpdate: 'Последнее обновление',
     passwordHint: 'Оставьте пустым, чтобы сохранить текущий пароль',
+  },
+
+  // Типы лицензий
+  licenseTypes: {
+    monthly: 'Ежемесячная',
+    yearly: 'Ежегодная',
+    manual: 'Ручная',
+    lifetime: 'Бессрочная',
   },
 
   // Working days
@@ -214,6 +226,8 @@ const rus = {
   history: {
     title: 'История',
     date: 'Дата',
+    dateFrom: 'Дата (с)',
+    dateTo: 'Дата (по)',
     user: 'Пользователь',
     actionType: 'Действие',
     objectType: 'Тип объекта',
@@ -227,6 +241,20 @@ const rus = {
     details: 'Детали истории',
     noChanges: 'Изменения не зафиксированы',
     showAll: 'Показать всю историю',
+  },
+
+  // История перемещения лицензий
+  licenseMoving: {
+    title: 'История перемещения лицензий',
+    detailTitle: 'Детали перемещения',
+    licenseData: 'Данные лицензии',
+    dateFrom: 'Дата (с)',
+    dateTo: 'Дата (по)',
+    from: 'Откуда',
+    to: 'Куда',
+    user: 'Пользователь',
+    product: 'Продукт',
+    licenseId: 'ID лицензии',
   },
 
   // Dictionary (generic)

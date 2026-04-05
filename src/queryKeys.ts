@@ -27,9 +27,10 @@ export const queryKeys = {
 
   // History
   history: {
-    all: ['history'] as const,
-    byObjectId: (objectId: string) => ['history', objectId] as const,
+    all: ['history', 'actions'] as const,
+    byObjectId: (objectId: string) => ['history', 'actions', objectId] as const,
     item: (id: number) => ['historyItem', id] as const,
+    licenseMoving: ['history', 'licenseMoving'] as const,
   },
 
   // Dictionaries (includes countries, cities, districts)
