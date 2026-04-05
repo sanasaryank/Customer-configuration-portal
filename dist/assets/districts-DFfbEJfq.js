@@ -1,1 +1,0 @@
-import{f as a,h as n,p as c,i,E as s}from"./index-DCdOv1T2.js";async function u(){return n(s.DISTRICTS)}async function D(t){return n(`${s.DISTRICTS}/${t}`)}async function I(t){return i(s.DISTRICTS,t)}async function S(t,r){return c(`${s.DISTRICTS}/${t}`,r)}async function T(t){return a(`${s.DISTRICTS}/${t}`)}export{D as a,I as c,T as d,u as g,S as u};
