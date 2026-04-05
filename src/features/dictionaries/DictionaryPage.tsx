@@ -34,7 +34,6 @@ const DICT_TITLE_KEYS: Record<DictionaryKey, string> = {
   productGroups: 'nav.productGroups',
   customerGroups: 'nav.customerGroups',
   customerStatus: 'nav.customerStatus',
-  licenseTypes: 'nav.licenseTypes',
   countries: 'nav.countries',
   cities: 'nav.cities',
   districts: 'nav.districts',
