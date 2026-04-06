@@ -11,6 +11,7 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Spinner';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { ErrorBanner } from '../../components/ui/ErrorBanner';
 
 export interface MoveLicenseProduct {
   productId: string;
@@ -318,9 +319,7 @@ export default function MoveLicenseModal({
           </div>
         )}
 
-        {mutation.isError && (
-          <p className="text-sm text-red-600">{mutation.error?.message || t('common.errorOccurred')}</p>
-        )}
+        {mutation.isError && <ErrorBanner message={mutation.error?.message || t('common.errorOccurred')} />}
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="secondary" onClick={onClose} disabled={mutation.isPending}>

@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getProducts, getProduct, updateProduct } from '../../api/products';
 import { getDictionary } from '../../api/dictionaries';
@@ -7,6 +7,7 @@ import { queryKeys } from '../../queryKeys';
 import type { ProductListItem } from '../../types/product';
 import { useAuth } from '../../providers/AuthProvider';
 import { useListOperations } from '../../hooks/useListOperations';
+import { useBlockToggle } from '../../hooks/useBlockToggle';
 import type { FilterField } from '../../hooks/useListOperations';
 import { useFilterValues, useRegisterFilterOptions } from '../../providers/FilterProvider';
 import { resolveTranslation } from '../../utils/translation';
@@ -25,7 +26,6 @@ import { ROUTES } from '../../constants/routes';
 export default function ProductsPage() {
   const { t } = useTranslation();
   const { lang } = useAuth();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [modalEditId, setModalEditId] = useState<string | null | undefined>(undefined);
   const filterValues = useFilterValues();
@@ -34,12 +34,10 @@ export default function ProductsPage() {
   const { data: productGroups = [] } = useQuery({ queryKey: queryKeys.dict('productGroups'), queryFn: () => getDictionary('productGroups') });
   const groupMap = React.useMemo(() => buildLookupMap(productGroups, lang), [productGroups, lang]);
 
-  const blockMutation = useMutation({
-    mutationFn: async ({ id, isBlocked }: { id: string; isBlocked: boolean }) => {
-      const full = await getProduct(id);
-      return updateProduct(id, { ...full, isBlocked });
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.products.all }),
+  const blockMutation = useBlockToggle({
+    getItem: getProduct,
+    updateItem: updateProduct,
+    listQueryKey: queryKeys.products.all,
   });
 
   const groupOptions = useMemo(
@@ -69,10 +67,6 @@ export default function ProductsPage() {
     sortFields,
   });
 
-  const handleSort = useCallback((key: string) => {
-    listOps.setSort({ key, direction: listOps.sort?.key === key && listOps.sort.direction === 'asc' ? 'desc' : 'asc' });
-  }, [listOps]);
-
   const columns: TableColumn<ProductListItem>[] = [
     { key: 'id', header: t('common.id'), sortable: true, render: (row) => row.id },
     { key: 'groupName', header: t('products.group'), sortable: true, render: (row) => resolveId(row.groupId, groupMap) },
@@ -100,7 +94,7 @@ export default function ProductsPage() {
       ) : (
         <>
           <Table columns={columns} data={listOps.items} keyExtractor={(row) => row.id}
-            sortKey={listOps.sort?.key} sortDirection={listOps.sort?.direction} onSort={handleSort}
+            sortKey={listOps.sort?.key} sortDirection={listOps.sort?.direction} onSort={listOps.toggleSort}
             emptyMessage={t('common.noData')} />
           <Pagination page={listOps.pagination.page} totalPages={listOps.totalPages}
             totalItems={listOps.totalItems} pageSize={listOps.pagination.pageSize}

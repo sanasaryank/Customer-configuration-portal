@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
@@ -146,11 +146,6 @@ export default function CustomersPage() {
     externalFilters: filterValues,
     sortFields,
   });
-
-  const handleSort = useCallback((key: string) => {
-    listOps.setSort({ key, direction: listOps.sort?.key === key && listOps.sort.direction === 'asc' ? 'desc' : 'asc' });
-  }, [listOps]);
-
 
   // ── Product chip helpers ──────────────────────────────────────────────────
 
@@ -379,7 +374,7 @@ export default function CustomersPage() {
             keyExtractor={(row) => row.id}
             sortKey={listOps.sort?.key}
             sortDirection={listOps.sort?.direction}
-            onSort={handleSort}
+            onSort={listOps.toggleSort}
             emptyMessage={t('common.noData')}
           />
           <Pagination

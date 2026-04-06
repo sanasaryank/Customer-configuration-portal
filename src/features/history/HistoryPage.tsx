@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -9,7 +9,8 @@ import type { HistoryListItem } from '../../types/history';
 import { useAuth } from '../../providers/AuthProvider';
 import { useListOperations } from '../../hooks/useListOperations';
 import type { FilterField } from '../../hooks/useListOperations';
-import { formatTimestamp } from '../../utils/timestamp';
+import { formatTimestamp, filterByDateRange } from '../../utils/timestamp';
+import { buildUsernameMap } from '../../utils/lookup';
 import { useFilterValues, useRegisterFilterOptions } from '../../providers/FilterProvider';
 import { Table } from '../../components/ui/Table';
 import type { TableColumn } from '../../components/ui/Table';
@@ -48,14 +49,7 @@ export default function HistoryPage() {
     queryFn: getEmployees,
   });
 
-  const employeeMap = React.useMemo(() => {
-    const map = new Map<string, string>();
-    if (!Array.isArray(employees)) return map;
-    for (const emp of employees) {
-      map.set(emp.id, emp.username);
-    }
-    return map;
-  }, [employees]);
+  const employeeMap = React.useMemo(() => buildUsernameMap(employees), [employees]);
 
   const usernameOptions = useMemo(
     () => (Array.isArray(employees) ? employees : []).map((e) => ({ value: e.username, label: e.username })),
@@ -64,18 +58,10 @@ export default function HistoryPage() {
   useRegisterFilterOptions('username', usernameOptions);
 
   // Date range pre-filter (dateFrom / dateTo) — handled outside useListOperations
-  const dateRangeFiltered = useMemo(() => {
-    const fromStr = filterValues['dateFrom']?.trim() ?? '';
-    const toStr   = filterValues['dateTo']?.trim() ?? '';
-    if (!fromStr && !toStr) return data;
-    const fromTs = fromStr ? Math.floor(new Date(fromStr).getTime() / 1000) : NaN;
-    const toTs   = toStr   ? Math.floor(new Date(toStr).getTime()   / 1000) : NaN;
-    return (Array.isArray(data) ? data : []).filter((item) => {
-      if (!isNaN(fromTs) && item.date < fromTs) return false;
-      if (!isNaN(toTs)   && item.date > toTs)   return false;
-      return true;
-    });
-  }, [data, filterValues]);
+  const dateRangeFiltered = useMemo(
+    () => filterByDateRange(Array.isArray(data) ? data : [], filterValues),
+    [data, filterValues],
+  );
 
   const filterFields = useMemo<FilterField<HistoryListItem>[]>(() => [
     { key: 'username',   extract: (item) => employeeMap.get(item.userId) ?? item.userId, matchMode: 'exact' },
@@ -102,13 +88,6 @@ export default function HistoryPage() {
     externalFilters: filterValues,
     sortFields,
   });
-
-  const handleSort = useCallback((key: string) => {
-    listOps.setSort({
-      key,
-      direction: listOps.sort?.key === key && listOps.sort.direction === 'asc' ? 'desc' : 'asc',
-    });
-  }, [listOps]);
 
   const actionBadgeVariant = (action: string) => {
     if (action === 'create') return 'success' as const;
@@ -206,7 +185,7 @@ export default function HistoryPage() {
             keyExtractor={(row) => String(row.id)}
             sortKey={listOps.sort?.key}
             sortDirection={listOps.sort?.direction}
-            onSort={handleSort}
+            onSort={listOps.toggleSort}
             emptyMessage={t('common.noData')}
           />
           <Pagination

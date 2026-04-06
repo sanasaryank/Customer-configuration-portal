@@ -22,6 +22,20 @@ export function buildLookupMap(
 }
 
 /**
+ * Build a Map<id, username> from a list of entities that have id and username.
+ */
+export function buildUsernameMap(
+  items: { id: string; username: string }[] | null | undefined,
+): Map<string, string> {
+  const map = new Map<string, string>();
+  if (!Array.isArray(items)) return map;
+  for (const item of items) {
+    map.set(item.id, item.username);
+  }
+  return map;
+}
+
+/**
  * Resolve a single ID to a name string, returning the ID itself as fallback.
  */
 export function resolveId(

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import type { SortState, PaginationState } from '../types/common';
 
 export const DEFAULT_PAGE_SIZE = 20;
@@ -37,6 +37,7 @@ interface UseListOperationsResult<T> {
   setSearch: (v: string) => void;
   sort: SortState | null;
   setSort: (s: SortState) => void;
+  toggleSort: (key: string) => void;
   pagination: PaginationState;
   setPage: (page: number) => void;
   setPageSize: (size: number) => void;
@@ -148,6 +149,13 @@ export function useListOperations<T>(
   const setPageSize = (size: number) =>
     setPagination({ page: 1, pageSize: size });
 
+  const toggleSort = useCallback((key: string) => {
+    setSort((prev) => ({
+      key,
+      direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  }, []);
+
   return {
     items: paged,
     totalItems,
@@ -156,6 +164,7 @@ export function useListOperations<T>(
     setSearch: handleSetSearch,
     sort,
     setSort,
+    toggleSort,
     pagination,
     setPage,
     setPageSize,

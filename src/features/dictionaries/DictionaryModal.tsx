@@ -2,7 +2,7 @@
 import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   getDictionary,
@@ -20,6 +20,7 @@ import { Checkbox } from '../../components/ui/Checkbox';
 import { Select } from '../../components/ui/Select';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { useFormError } from '../../hooks/useFormError';
+import { useCrudMutations } from '../../hooks/useCrudMutations';
 import { TranslationEditor } from '../../components/form/TranslationEditor';
 import { Spinner } from '../../components/ui/Spinner';
 import { resolveTranslation } from '../../utils/translation';
@@ -58,7 +59,6 @@ export default function DictionaryModal({
 }: DictionaryModalProps) {
   const { t } = useTranslation();
   const { lang } = useAuth();
-  const queryClient = useQueryClient();
   const isEdit = editId !== null;
   const hasParent = !!parentKey && !!parentField;
 
@@ -99,12 +99,10 @@ export default function DictionaryModal({
     }
   }, [existing, reset, hasParent, parentField]);
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.dict(dictKey) });
-    if (editId) {
-      queryClient.invalidateQueries({ queryKey: queryKeys.dictById(dictKey, editId) });
-    }
-  };
+  const invalidateKeys = [
+    queryKeys.dict(dictKey),
+    ...(editId ? [queryKeys.dictById(dictKey, editId)] : []),
+  ];
 
   const buildPayload = (values: FormValues) => {
     const base = {
@@ -118,32 +116,27 @@ export default function DictionaryModal({
     return base;
   };
 
-  const createMutation = useMutation({
-    mutationFn: (values: FormValues) =>
-      createDictionaryItem(dictKey, buildPayload(values)),
-    onSuccess: () => { invalidate(); onClose(); },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (values: FormValues) => {
-      const payload = {
-        ...buildPayload(values),
-        id: existing!.id,
-        hash: (existing as DictionaryItem).hash,
-      };
-      return updateDictionaryItem(dictKey, existing!.id, payload);
+  const { submit, isPending, mutationError } = useCrudMutations<FormValues>(
+    {
+      createFn: (values) => createDictionaryItem(dictKey, buildPayload(values)),
+      updateFn: (values) => {
+        const payload = {
+          ...buildPayload(values),
+          id: existing!.id,
+          hash: (existing as DictionaryItem).hash,
+        };
+        return updateDictionaryItem(dictKey, existing!.id, payload);
+      },
+      invalidateKeys,
+      onClose,
     },
-    onSuccess: () => { invalidate(); onClose(); },
-  });
+    isEdit,
+  );
 
   const onSubmit = (values: FormValues) => {
     if (hasParent && !values.parentId) return;
-    if (isEdit) updateMutation.mutate(values);
-    else createMutation.mutate(values);
+    submit(values);
   };
-
-  const isPending = createMutation.isPending || updateMutation.isPending;
-  const mutationError = createMutation.error || updateMutation.error;
   const { errorMessage, onValidationError } = useFormError(mutationError);
 
   const safeParentItems = Array.isArray(parentItems) ? parentItems : [];

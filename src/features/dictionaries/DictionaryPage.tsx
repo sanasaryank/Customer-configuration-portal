@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   getDictionary,
@@ -10,6 +10,7 @@ import { queryKeys } from '../../queryKeys';
 import type { DictionaryKey, DictionaryListItem } from '../../types/dictionary';
 import { useAuth } from '../../providers/AuthProvider';
 import { useListOperations } from '../../hooks/useListOperations';
+import { useBlockToggle } from '../../hooks/useBlockToggle';
 import type { FilterField } from '../../hooks/useListOperations';
 import { useFilterValues, useRegisterFilterOptions } from '../../providers/FilterProvider';
 import { resolveTranslation } from '../../utils/translation';
@@ -70,7 +71,6 @@ interface DictionaryPageProps {
 export default function DictionaryPage({ dictKey }: DictionaryPageProps) {
   const { t } = useTranslation();
   const { lang } = useAuth();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [modalEditId, setModalEditId] = useState<string | null | undefined>(
     undefined,
@@ -94,23 +94,10 @@ export default function DictionaryPage({ dictKey }: DictionaryPageProps) {
     [parentData, lang],
   );
 
-  const blockMutation = useMutation({
-    mutationFn: async ({
-      id,
-      isBlocked,
-    }: {
-      id: string;
-      isBlocked: boolean;
-    }) => {
-      const full = await getDictionaryItem(dictKey, id);
-      return updateDictionaryItem(dictKey, id, {
-        ...full,
-        isBlocked,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.dict(dictKey) });
-    },
+  const blockMutation = useBlockToggle({
+    getItem: (id: string) => getDictionaryItem(dictKey, id),
+    updateItem: (id: string, payload) => updateDictionaryItem(dictKey, id, payload),
+    listQueryKey: queryKeys.dict(dictKey),
   });
 
   // Register parent options for geo select dropdowns (countryId / cityId)
@@ -172,19 +159,6 @@ export default function DictionaryPage({ dictKey }: DictionaryPageProps) {
     sortFields,
   });
 
-  const handleSort = useCallback(
-    (key: string) => {
-      listOps.setSort({
-        key,
-        direction:
-          listOps.sort?.key === key && listOps.sort.direction === 'asc'
-            ? 'desc'
-            : 'asc',
-      });
-    },
-    [listOps],
-  );
-
   const columns: TableColumn<DictionaryListItem>[] = [
     { key: 'id', header: t('common.id'), sortable: true, render: (row) => row.id },
     ...(geoConfig ? [{
@@ -240,7 +214,7 @@ export default function DictionaryPage({ dictKey }: DictionaryPageProps) {
             keyExtractor={(row) => row.id}
             sortKey={listOps.sort?.key}
             sortDirection={listOps.sort?.direction}
-            onSort={handleSort}
+            onSort={listOps.toggleSort}
             emptyMessage={t('common.noData')}
           />
           <Pagination

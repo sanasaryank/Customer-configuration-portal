@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getProduct, createProduct, updateProduct } from '../../api/products';
 import { getDictionary } from '../../api/dictionaries';
@@ -17,6 +17,7 @@ import { Textarea } from '../../components/ui/Textarea';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { useFormError } from '../../hooks/useFormError';
+import { useCrudMutations } from '../../hooks/useCrudMutations';
 import { TranslationEditor } from '../../components/form/TranslationEditor';
 import { DictionarySelect } from '../../components/form/DictionarySelect';
 import { Spinner } from '../../components/ui/Spinner';
@@ -55,7 +56,6 @@ interface ProductModalProps {
 export default function ProductModal({ editId, onClose }: ProductModalProps) {
   const { t } = useTranslation();
   const { lang } = useAuth();
-  const queryClient = useQueryClient();
   const isEdit = editId !== null;
 
   const { data: existing, isLoading: loadingItem } = useQuery({
@@ -96,24 +96,23 @@ export default function ProductModal({ editId, onClose }: ProductModalProps) {
     }
   }, [existing, reset]);
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
-    if (editId) queryClient.invalidateQueries({ queryKey: queryKeys.products.byId(editId) });
-  };
+  const invalidateKeys = [
+    queryKeys.products.all,
+    ...(editId ? [queryKeys.products.byId(editId)] : []),
+  ];
 
-  const createMutation = useMutation({
-    mutationFn: (v: FormValues) => createProduct(v),
-    onSuccess: () => { invalidate(); onClose(); },
-  });
-  const updateMutation = useMutation({
-    mutationFn: (v: FormValues) =>
-      updateProduct(existing!.id, { ...v, id: existing!.id, hash: (existing as Product).hash }),
-    onSuccess: () => { invalidate(); onClose(); },
-  });
+  const { submit, isPending, mutationError } = useCrudMutations<FormValues>(
+    {
+      createFn: (v) => createProduct(v),
+      updateFn: (v) =>
+        updateProduct(existing!.id, { ...v, id: existing!.id, hash: (existing as Product).hash }),
+      invalidateKeys,
+      onClose,
+    },
+    isEdit,
+  );
 
-  const onSubmit = (v: FormValues) => isEdit ? updateMutation.mutate(v) : createMutation.mutate(v);
-  const isPending = createMutation.isPending || updateMutation.isPending;
-  const mutationError = createMutation.error || updateMutation.error;
+  const onSubmit = (v: FormValues) => submit(v);
   const { errorMessage, onValidationError } = useFormError(mutationError);
 
   return (

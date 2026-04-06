@@ -6,6 +6,7 @@ import { getDictionary } from '../../api/dictionaries';
 import { queryKeys } from '../../queryKeys';
 import { resolveTranslation } from '../../utils/translation';
 import { useAuth } from '../../providers/AuthProvider';
+import { toYMD } from '../../utils/timestamp';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import clsx from 'clsx';
@@ -27,13 +28,6 @@ function getDaysInMonth(year: number, month: number): number {
 // Returns 0=Monday … 6=Sunday
 function getFirstDayOfMonth(year: number, month: number): number {
   return (new Date(year, month, 1).getDay() + 6) % 7;
-}
-
-function toYMD(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 }
 
 

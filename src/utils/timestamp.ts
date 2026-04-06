@@ -55,3 +55,23 @@ export function dateInputToUnix(dateStr: string): number {
   const [y, m, d] = dateStr.split('-').map(Number);
   return Math.floor(Date.UTC(y!, m! - 1, d!) / 1000);
 }
+
+/**
+ * Filter an array of items by a date range (from/to) using a Unix-seconds date field.
+ * `filterValues` should contain `dateFrom` and/or `dateTo` as YYYY-MM-DD strings.
+ */
+export function filterByDateRange<T extends { date: number }>(
+  data: T[],
+  filterValues: Record<string, string | undefined>,
+): T[] {
+  const fromStr = filterValues['dateFrom']?.trim() ?? '';
+  const toStr   = filterValues['dateTo']?.trim() ?? '';
+  if (!fromStr && !toStr) return data;
+  const fromTs = fromStr ? Math.floor(new Date(fromStr).getTime() / 1000) : NaN;
+  const toTs   = toStr   ? Math.floor(new Date(toStr).getTime()   / 1000) : NaN;
+  return data.filter((item) => {
+    if (!isNaN(fromTs) && item.date < fromTs) return false;
+    if (!isNaN(toTs)   && item.date > toTs)   return false;
+    return true;
+  });
+}

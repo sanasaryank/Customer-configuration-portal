@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getEmployee, createEmployee, updateEmployee } from '../../api/employees';
 import { queryKeys } from '../../queryKeys';
@@ -16,6 +16,7 @@ import { Textarea } from '../../components/ui/Textarea';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { useFormError } from '../../hooks/useFormError';
+import { useCrudMutations } from '../../hooks/useCrudMutations';
 import { TranslationEditor } from '../../components/form/TranslationEditor';
 import { PasswordField } from '../../components/form/PasswordField';
 import { Spinner } from '../../components/ui/Spinner';
@@ -38,7 +39,6 @@ interface EmployeeModalProps {
 
 export default function EmployeeModal({ editId, onClose }: EmployeeModalProps) {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
   const isEdit = editId !== null;
 
   const { data: existing, isLoading: loadingItem } = useQuery({
@@ -78,39 +78,30 @@ export default function EmployeeModal({ editId, onClose }: EmployeeModalProps) {
     }
   }, [existing, reset]);
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.employees.all });
-    if (editId) {
-      queryClient.invalidateQueries({ queryKey: queryKeys.employees.byId(editId) });
-    }
-  };
+  const invalidateKeys = [
+    queryKeys.employees.all,
+    ...(editId ? [queryKeys.employees.byId(editId)] : []),
+  ];
 
-  const createMutation = useMutation({
-    mutationFn: (values: FormValues) =>
-      createEmployee({ ...values, password: values.password }),
-    onSuccess: () => { invalidate(); onClose(); },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (values: FormValues) => {
-      // Omit password if empty (spec §2.5)
-      const cleaned = omitEmptyPasswords(values, ['password']);
-      return updateEmployee(existing!.id, {
-        ...cleaned,
-        id: (existing as Employee).id,
-        hash: (existing as Employee).hash,
-      } as Parameters<typeof updateEmployee>[1]);
+  const { submit, isPending, mutationError } = useCrudMutations<FormValues>(
+    {
+      createFn: (values) =>
+        createEmployee({ ...values, password: values.password }),
+      updateFn: (values) => {
+        const cleaned = omitEmptyPasswords(values, ['password']);
+        return updateEmployee(existing!.id, {
+          ...cleaned,
+          id: (existing as Employee).id,
+          hash: (existing as Employee).hash,
+        } as Parameters<typeof updateEmployee>[1]);
+      },
+      invalidateKeys,
+      onClose,
     },
-    onSuccess: () => { invalidate(); onClose(); },
-  });
+    isEdit,
+  );
 
-  const onSubmit = (values: FormValues) => {
-    if (isEdit) updateMutation.mutate(values);
-    else createMutation.mutate(values);
-  };
-
-  const isPending = createMutation.isPending || updateMutation.isPending;
-  const mutationError = createMutation.error || updateMutation.error;
+  const onSubmit = (values: FormValues) => submit(values);
   const { errorMessage, onValidationError, clearValidationError } = useFormError(mutationError);
 
   const roleOptions = [

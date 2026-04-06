@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   getEmployees,
@@ -10,6 +10,7 @@ import { queryKeys } from '../../queryKeys';
 import type { EmployeeListItem } from '../../types/employee';
 import { useAuth } from '../../providers/AuthProvider';
 import { useListOperations } from '../../hooks/useListOperations';
+import { useBlockToggle } from '../../hooks/useBlockToggle';
 import type { FilterField } from '../../hooks/useListOperations';
 import { useFilterValues } from '../../providers/FilterProvider';
 import { resolveTranslation } from '../../utils/translation';
@@ -27,7 +28,6 @@ import { ROUTES } from '../../constants/routes';
 export default function EmployeesPage() {
   const { t } = useTranslation();
   const { lang } = useAuth();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [modalEditId, setModalEditId] = useState<string | null | undefined>(undefined);
   const filterValues = useFilterValues();
@@ -37,12 +37,10 @@ export default function EmployeesPage() {
     queryFn: getEmployees,
   });
 
-  const blockMutation = useMutation({
-    mutationFn: async ({ id, isBlocked }: { id: string; isBlocked: boolean }) => {
-      const full = await getEmployee(id);
-      return updateEmployee(id, { ...full, isBlocked });
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.employees.all }),
+  const blockMutation = useBlockToggle({
+    getItem: getEmployee,
+    updateItem: updateEmployee,
+    listQueryKey: queryKeys.employees.all,
   });
 
   const filterFields = useMemo<FilterField<EmployeeListItem>[]>(() => [
@@ -66,13 +64,6 @@ export default function EmployeesPage() {
     externalFilters: filterValues,
     sortFields,
   });
-
-  const handleSort = useCallback((key: string) => {
-    listOps.setSort({
-      key,
-      direction: listOps.sort?.key === key && listOps.sort.direction === 'asc' ? 'desc' : 'asc',
-    });
-  }, [listOps]);
 
   const columns: TableColumn<EmployeeListItem>[] = [
     { key: 'id', header: t('common.id'), sortable: true, render: (row) => row.id },
@@ -112,7 +103,7 @@ export default function EmployeesPage() {
             keyExtractor={(row) => row.id}
             sortKey={listOps.sort?.key}
             sortDirection={listOps.sort?.direction}
-            onSort={handleSort}
+            onSort={listOps.toggleSort}
             emptyMessage={t('common.noData')}
           />
           <Pagination

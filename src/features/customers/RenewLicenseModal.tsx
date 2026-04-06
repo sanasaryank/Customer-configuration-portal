@@ -8,6 +8,7 @@ import { unixToDateInput, dateInputToUnix } from '../../utils/timestamp';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
+import { ErrorBanner } from '../../components/ui/ErrorBanner';
 
 export interface RenewLicenseProduct {
   productId: string;
@@ -212,9 +213,7 @@ export default function RenewLicenseModal({
           </div>
         )}
 
-        {mutation.isError && (
-          <p className="text-sm text-red-600">{mutation.error?.message || t('common.errorOccurred')}</p>
-        )}
+        {mutation.isError && <ErrorBanner message={mutation.error?.message || t('common.errorOccurred')} />}
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="secondary" onClick={onClose} disabled={mutation.isPending}>

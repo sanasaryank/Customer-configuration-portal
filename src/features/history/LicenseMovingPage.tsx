@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getLicenseMovingHistory } from '../../api/history';
@@ -12,7 +12,8 @@ import { useListOperations } from '../../hooks/useListOperations';
 import type { FilterField } from '../../hooks/useListOperations';
 import { useFilterValues, useRegisterFilterOptions } from '../../providers/FilterProvider';
 import { resolveTranslation } from '../../utils/translation';
-import { formatTimestamp } from '../../utils/timestamp';
+import { formatTimestamp, filterByDateRange } from '../../utils/timestamp';
+import { buildUsernameMap } from '../../utils/lookup';
 import { Table } from '../../components/ui/Table';
 import type { TableColumn } from '../../components/ui/Table';
 import { Pagination } from '../../components/ui/Pagination';
@@ -152,13 +153,7 @@ export default function LicenseMovingPage() {
     return m;
   }, [customers, lang]);
 
-  const employeeMap = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const e of Array.isArray(employees) ? employees : []) {
-      m.set(e.id, e.username);
-    }
-    return m;
-  }, [employees]);
+  const employeeMap = useMemo(() => buildUsernameMap(employees), [employees]);
 
   const productMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -194,18 +189,10 @@ export default function LicenseMovingPage() {
   useRegisterFilterOptions('product', productOptions);
 
   // Date range pre-filter (dateFrom / dateTo) — handled outside useListOperations
-  const dateRangeFiltered = useMemo(() => {
-    const fromStr = filterValues['dateFrom']?.trim() ?? '';
-    const toStr   = filterValues['dateTo']?.trim() ?? '';
-    if (!fromStr && !toStr) return data;
-    const fromTs = fromStr ? Math.floor(new Date(fromStr).getTime() / 1000) : NaN;
-    const toTs   = toStr   ? Math.floor(new Date(toStr).getTime()   / 1000) : NaN;
-    return data.filter((item) => {
-      if (!isNaN(fromTs) && item.date < fromTs) return false;
-      if (!isNaN(toTs)   && item.date > toTs)   return false;
-      return true;
-    });
-  }, [data, filterValues]);
+  const dateRangeFiltered = useMemo(
+    () => filterByDateRange(data, filterValues),
+    [data, filterValues],
+  );
 
   const filterFields = useMemo<FilterField<LicenseMovingItem>[]>(() => [
     { key: 'from',      extract: (item) => item.from,                    matchMode: 'exact' },
@@ -237,13 +224,6 @@ export default function LicenseMovingPage() {
     sortFields,
     defaultSort: { key: 'date', direction: 'desc' },
   });
-
-  const handleSort = useCallback((key: string) => {
-    listOps.setSort({
-      key,
-      direction: listOps.sort?.key === key && listOps.sort.direction === 'asc' ? 'desc' : 'asc',
-    });
-  }, [listOps]);
 
   const columns: TableColumn<LicenseMovingItem>[] = [
     {
@@ -306,7 +286,7 @@ export default function LicenseMovingPage() {
             keyExtractor={(row) => `${row.date}-${row.from}-${row.to}-${row.license?.productId}`}
             sortKey={listOps.sort?.key}
             sortDirection={listOps.sort?.direction}
-            onSort={handleSort}
+            onSort={listOps.toggleSort}
             emptyMessage={t('common.noData')}
           />
           <Pagination
