@@ -33,10 +33,20 @@ const STATUS_SWITCH: FilterFieldConfig = {
  */
 export const FILTER_CONFIGS: Record<string, FilterFieldConfig[]> = {
   [ROUTES.CUSTOMERS]: [
-    { key: 'name',         labelKey: 'common.name',           type: 'text' },
-    { key: 'group',        labelKey: 'customers.groupId',     type: 'select' },
-    { key: 'productTypes', labelKey: 'customers.productTypes',type: 'select' },
-    { key: 'status',       labelKey: 'customers.statusId',    type: 'select' },
+    { key: 'name',         labelKey: 'common.name',                  type: 'text' },
+    { key: 'group',        labelKey: 'customers.groupId',             type: 'select' },
+    { key: 'productTypes', labelKey: 'customers.productTypes',        type: 'select' },
+    { key: 'licenseMode',  labelKey: 'customers.licenseMode',         type: 'select',
+      staticOptions: [
+        { value: 'monthly',  labelKey: 'licenseModes.monthly' },
+        { value: 'yearly',   labelKey: 'licenseModes.yearly' },
+        { value: 'manual',   labelKey: 'licenseModes.manual' },
+        { value: 'temporary', labelKey: 'licenseModes.temporary' },
+        { value: 'lifetime', labelKey: 'licenseModes.lifetime' },
+      ],
+    },
+    { key: 'licenseType',  labelKey: 'customers.licenseTypeFilter',   type: 'select' },
+    { key: 'status',       labelKey: 'customers.statusId',            type: 'select' },
     STATUS_SWITCH,
   ],
   [ROUTES.PRODUCTS]: [
@@ -79,6 +89,7 @@ export const FILTER_CONFIGS: Record<string, FilterFieldConfig[]> = {
   [ROUTES.PRODUCT_GROUPS]:    [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
   [ROUTES.CUSTOMER_GROUPS]:   [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
   [ROUTES.CUSTOMER_STATUS]:   [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
+  [ROUTES.LICENSE_TYPES]:     [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
   [ROUTES.COUNTRIES]:         [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
   // key must match geoConfig.parentField used in DictionaryPage filterFields
   [ROUTES.CITIES]: [

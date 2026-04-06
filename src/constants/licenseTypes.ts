@@ -1,2 +1,2 @@
-export const LICENSE_TYPE_IDS = ['monthly', 'yearly', 'manual', 'lifetime'] as const;
-export type LicenseTypeId = (typeof LICENSE_TYPE_IDS)[number];
+export const LICENSE_MODE_IDS = ['monthly', 'yearly', 'manual', 'temporary', 'lifetime'] as const;
+export type LicenseModeId = (typeof LICENSE_MODE_IDS)[number];

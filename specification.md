@@ -69,8 +69,8 @@ This applies to:
 
 employees.password
 customers.users[].password
-customers.licenseInfo.products[].connectionInfo.serverPassword
-customers.licenseInfo.products[].connectionInfo.password
+customers.licenseInfo.licenses[].products[].connectionInfo.serverPassword
+customers.licenseInfo.licenses[].products[].connectionInfo.password
 2.6 Blocking rule
 isBlocked exists for all entities except:
 history
@@ -120,7 +120,7 @@ history userId -> employee username
 customer groupId -> customer group name
 customer statusId -> customer status name
 product groupId -> product group name
-customer licenseInfo.products[].productId -> product names
+customer licenseInfo.licenses[].products[].productId -> product names
 responsibleId -> employee name/username
 2.9 Modal rule
 
@@ -457,21 +457,29 @@ frontend should allow assigning user products only for products where hasUsers =
     "email": "string"
   },
   "licenseInfo": {
-    "products": [
+    "licenses": [
       {
-        "productId": "string",
-        "licenseTypeId": "monthly | yearly | manual | lifetime",
-        "endDate": 1735600000,
+        "name": "string",
         "hardwareKey": "string",
-        "licenseKey": "string",
-        "licenseData": {},
-        "connectionInfo": {
-          "connectionTypeId": "string",
-          "host": "string",
-          "port": 8020,
-          "serverUsername": "string",
-          "username": "string"
-        }
+        "appId": "string",
+        "products": [
+          {
+            "productId": "string",
+            "licenseModeId": "monthly | yearly | manual | temporary | lifetime",
+            "licenseTypeId": "string - from /dictionary/licenseTypes",
+            "endDate": 1735600000,
+            "track": false,
+            "licenseKey": "string",
+            "licenseData": {},
+            "connectionInfo": {
+              "connectionTypeId": "string",
+              "host": "string",
+              "port": 8020,
+              "serverUsername": "string",
+              "username": "string"
+            }
+          }
+        ]
       }
     ]
   },
@@ -497,8 +505,8 @@ with hash added in GET by id / POST response / PUT payload / PUT response.
 
 Inside customer write payloads only:
 
-licenseInfo.products[].connectionInfo.serverPassword
-licenseInfo.products[].connectionInfo.password
+licenseInfo.licenses[].products[].connectionInfo.serverPassword
+licenseInfo.licenses[].products[].connectionInfo.password
 users[].password
 
 Note: lastUpdated is a read-only field set by the backend; it must not be sent in write payloads.
@@ -512,48 +520,57 @@ generalInfo.groupId -> /dictionary/customerGroups
 contactInfo.geo.countryId -> /countries
 contactInfo.geo.cityId -> /cities
 contactInfo.geo.districtId -> /districts
-licenseInfo.products[].connectionInfo.connectionTypeId -> /dictionary/integrationTypes
-users[].allowedProducts[] -> product IDs (must be from licenseInfo.products[].productId with hasUsers = true)
+licenseInfo.licenses[].products[].connectionInfo.connectionTypeId -> /dictionary/integrationTypes
+users[].allowedProducts[] -> product IDs (must be from licenseInfo.licenses[].products[].productId with hasUsers = true)
 5.7.4 Customer user rules
 customer users are edited only inside customer, no separate endpoints
 users[].password:
 required when creating new user
 optional when editing existing user
 never returned by backend
-allowedProducts can contain only products listed in licenseInfo.products[] where hasUsers = true
+allowedProducts can contain only products listed in licenseInfo.licenses[].products[] where hasUsers = true
 5.7.5 Customer license rules
 
-Products are tracked exclusively via licenseInfo.products[]. There is no separate top-level products[] field.
+Products are tracked exclusively via licenseInfo.licenses[].products[]. There is no separate top-level products[] field.
 
-licenseInfo.products[] item:
+licenseInfo.licenses[] item:
 
 {
-  "productId": "string",
-  "licenseTypeId": "monthly | yearly | manual | lifetime",
-  "endDate": 1735600000,
+  "name": "string",
   "hardwareKey": "string",
-  "licenseKey": "string",
-  "licenseData": {},
-  "connectionInfo": {
-    "connectionTypeId": "string",
-    "host": "string",
-    "port": 8020,
-    "serverUsername": "string",
-    "username": "string"
-  }
+  "appId": "string",
+  "products": [
+    {
+      "productId": "string",
+      "licenseModeId": "monthly | yearly | manual | temporary | lifetime",
+      "licenseTypeId": "string - from /dictionary/licenseTypes",
+      "endDate": 1735600000,
+      "track": false,
+      "licenseKey": "string",
+      "licenseData": {},
+      "connectionInfo": {
+        "connectionTypeId": "string",
+        "host": "string",
+        "port": 8020,
+        "serverUsername": "string",
+        "username": "string"
+      }
+    }
+  ]
 }
 
-licenseTypeId values:
-  monthly  — license renewed monthly
-  yearly   — license renewed yearly
-  manual   — manually managed license
-  lifetime — permanent license, never renewed
+licenseModeId values:
+  monthly   — license renewed monthly
+  yearly    — license renewed yearly
+  manual    — manually managed license
+  temporary — temporary fixed-term license
+  lifetime  — permanent license, never renewed
 
-endDate is a Unix timestamp in seconds (top-level field, not inside licenseData).
+endDate is a Unix timestamp in seconds (top-level field inside each product, not inside licenseData).
 
 Validation rules:
 
-licenseTypeId is required
+licenseModeId is optional
 endDate is required (converted from YYYY-MM-DD date input to Unix timestamp in write payload)
 licenseData keys must match licenseTemplate[].name of the corresponding product
 value type must match licenseTemplate[].kind
@@ -561,14 +578,16 @@ required keys must match licenseTemplate[].required = true
 
 Dynamic behavior:
 
-Products are added/removed directly in licenseInfo.products[] via the License Info tab in the customer form.
-Frontend creates a new empty license block when user adds a product via the "Add Product" selector.
-Frontend allows removing a license block entirely when user removes a product.
-Each product block contains its own connectionInfo fields; a "copy connection from" helper allows copying connection details from another product block.
+License blocks (licenseInfo.licenses[]) are added/removed via "Add License" / remove buttons.
+Each license block has a name (string), hardwareKey (string), and appId (string, read-only) field.
+Products are added/removed inside a license block via the "Add Product" selector within that license.
+Frontend creates a new empty product block when user adds a product via the selector.
+Frontend allows removing a product block; frontend allows removing an entire license block (removes all its products).
+Each product block contains its own connectionInfo fields; a "copy connection from" helper allows copying connection details from another product block within the same license.
 License transfer:
   POST /customers/moveLicense/{dstId} with body { srcId, productId } moves one specific product license from the source customer to the destination customer
   The "Move License" action is available per-customer in the customer list
-  A product selector appears first (required when source customer has multiple products)
+  A product selector appears first (required when source customer has multiple products across all licenses)
   A customer picker modal opens, allowing search by name; the source customer is excluded from the list
   backend is responsible for actual removal/cleanup
 License renewal:
@@ -593,7 +612,7 @@ productTypes = displayed as colored abbreviation chips (not plain text):
   max column width applied
 status = resolved name by generalInfo.statusId
 isBlocked = generalInfo.isBlocked
-endDate = minimum endDate across all licenseInfo.products[], formatted as a timestamp; color-coded:
+endDate = minimum endDate across all licenseInfo.licenses[].products[], formatted as a timestamp; color-coded:
   past → dark red
   within 7 days → red
   otherwise → green
@@ -680,7 +699,8 @@ GET /moveLicense response item
   "user": "employeeId",
   "license": {
     "productId": "string",
-    "licenseTypeId": "monthly | yearly | manual | lifetime",
+    "licenseModeId": "monthly | yearly | manual | lifetime",
+    "licenseTypeId": "string - from /dictionary/licenseTypes",
     "endDate": 1735600000,
     "hardwareKey": "string",
     "licenseKey": "string",
@@ -912,7 +932,7 @@ Columns:
 id
 name (localized)
 group (resolved from generalInfo.groupId)
-productTypes (resolved from licenseInfo.products[].productId)
+productTypes (resolved from licenseInfo.licenses[].products[].productId)
 status (resolved from generalInfo.statusId)
 lastUpdated (formatted timestamp)
 
@@ -947,9 +967,11 @@ Contact Info tab:
 License Info tab:
   collapsible per-product blocks (add via selector, remove via ✕ button)
   each block contains:
-    licenseTypeId select (monthly/yearly/manual/lifetime — required)
+    licenseModeId select (monthly/yearly/manual/lifetime — required)
+    licenseTypeId select (from /dictionary/licenseTypes)
     endDate date input (required; stored as Unix timestamp in payload)
     hardwareKey, licenseKey text inputs
+    appId: read-only text field with copy-to-clipboard button (disabled input, never editable)
     licenseData fields driven by product.licenseTemplate (kind-based input types)
     connectionInfo block:
       connectionTypeId select (integration types)
@@ -963,7 +985,7 @@ Users tab:
     localized name
     username (required), restoreEmail
     password (required for new users, optional for existing)
-    allowedProducts checkboxes — filtered to products in licenseInfo.products[] where hasUsers = true
+    allowedProducts checkboxes — filtered to products in licenseInfo.licenses[].products[] where hasUsers = true
     isBlocked checkbox
 10.7 History page
 
@@ -988,7 +1010,7 @@ Do not implement backend paging/filtering assumptions
 Do not invent extra endpoints for block/history/logout
 Do not include lastUpdated in customer write payloads
 Do not place endDate inside licenseData — it is a top-level license product field
-Do not offer license renewal for products with licenseTypeId = "lifetime"
+Do not offer license renewal for products with licenseModeId = "lifetime"
 Do not move a license without selecting a specific productId when the customer has multiple products
 12. Final implementation directive for AI
 

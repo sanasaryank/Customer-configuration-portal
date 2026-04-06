@@ -58,9 +58,10 @@ export type LicenseData = Record<string, JsonValue>;
 
 export interface CustomerLicenseProduct {
   productId: string;
+  licenseModeId: string;
   licenseTypeId: string;
   endDate: number;
-  hardwareKey: string;
+  track: boolean;
   licenseKey: string;
   licenseData: LicenseData;
   connectionInfo: CustomerConnectionInfo;
@@ -68,9 +69,10 @@ export interface CustomerLicenseProduct {
 
 export interface CustomerLicenseProductWrite {
   productId: string;
+  licenseModeId: string;
   licenseTypeId: string;
   endDate: number;
-  hardwareKey: string;
+  track: boolean;
   licenseKey: string;
   licenseData: LicenseData;
   connectionInfo: CustomerConnectionInfoWrite;
@@ -78,24 +80,46 @@ export interface CustomerLicenseProductWrite {
 
 export interface CustomerLicenseProductForm {
   productId: string;
+  licenseModeId: string;
   licenseTypeId: string;
   endDate: string;
-  hardwareKey: string;
+  track: boolean;
   licenseKey: string;
   licenseData: LicenseData;
   connectionInfo: CustomerFormConnectionInfo;
 }
 
-export interface CustomerLicenseInfo {
+export interface CustomerLicense {
+  name: string;
+  hardwareKey: string;
+  appId: string;
   products: CustomerLicenseProduct[];
 }
 
-export interface CustomerLicenseInfoWrite {
+export interface CustomerLicenseWrite {
+  name: string;
+  hardwareKey: string;
+  appId: string;
   products: CustomerLicenseProductWrite[];
 }
 
-export interface CustomerLicenseInfoForm {
+export interface CustomerLicenseForm {
+  name: string;
+  hardwareKey: string;
+  appId: string;
   products: CustomerLicenseProductForm[];
+}
+
+export interface CustomerLicenseInfo {
+  licenses: CustomerLicense[];
+}
+
+export interface CustomerLicenseInfoWrite {
+  licenses: CustomerLicenseWrite[];
+}
+
+export interface CustomerLicenseInfoForm {
+  licenses: CustomerLicenseForm[];
 }
 
 // Customer user as returned by GET (no password)

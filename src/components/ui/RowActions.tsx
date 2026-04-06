@@ -79,6 +79,17 @@ export function IconDelete() {
   );
 }
 
+export function IconShare() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="3" r="1.5" />
+      <circle cx="12" cy="13" r="1.5" />
+      <circle cx="4" cy="8" r="1.5" />
+      <path d="M5.4 7.3L10.6 4.2M5.4 8.7L10.6 11.8" />
+    </svg>
+  );
+}
+
 // ─── RowActions component ─────────────────────────────────────────────────────
 
 export interface RowAction {

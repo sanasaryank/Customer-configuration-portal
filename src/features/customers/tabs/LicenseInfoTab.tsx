@@ -8,7 +8,7 @@ import { queryKeys } from '../../../queryKeys';
 import { useAuth } from '../../../providers/AuthProvider';
 import type { CustomerFormValues } from '../../../types/customer';
 import type { LicenseTemplateField } from '../../../types/product';
-import { LICENSE_TYPE_IDS } from '../../../constants/licenseTypes';
+import { LICENSE_MODE_IDS } from '../../../constants/licenseTypes';
 import { resolveTranslation } from '../../../utils/translation';
 import { Input } from '../../../components/ui/Input';
 import { Checkbox } from '../../../components/ui/Checkbox';
@@ -16,6 +16,9 @@ import { Button } from '../../../components/ui/Button';
 import { Select } from '../../../components/ui/Select';
 import { DictionarySelect } from '../../../components/form/DictionarySelect';
 import { PasswordField } from '../../../components/form/PasswordField';
+import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
+import { CopyableInput } from '../../../components/ui/CopyableInput';
+import { useConfirmDialog } from '../../../hooks/useConfirmDialog';
 
 function LicenseFieldInput({
   templateField,
@@ -58,13 +61,15 @@ function LicenseFieldInput({
 
 /** Connection fields rendered inside each product block. */
 function ProductConnectionFields({
-  index,
+  licIndex,
+  prodIndex,
   isEdit,
   otherProducts,
 }: {
-  index: number;
+  licIndex: number;
+  prodIndex: number;
   isEdit: boolean;
-  otherProducts: { index: number; label: string }[];
+  otherProducts: { licIndex: number; prodIndex: number; label: string }[];
 }) {
   const { t } = useTranslation();
   const { lang } = useAuth();
@@ -78,11 +83,10 @@ function ProductConnectionFields({
   const [copySelectValue, setCopySelectValue] = React.useState('');
 
   const handleCopyFrom = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const srcIndex = Number(e.target.value);
-    if (Number.isNaN(srcIndex)) return;
-    const src = getValues(`licenseInfo.products.${srcIndex}.connectionInfo`);
-    // Copy everything except write-only passwords (never pre-filled)
-    setValue(`licenseInfo.products.${index}.connectionInfo`, {
+    const [srcLic, srcProd] = (e.target.value as string).split(':').map(Number);
+    if (Number.isNaN(srcLic) || Number.isNaN(srcProd)) return;
+    const src = getValues(`licenseInfo.licenses.${srcLic}.products.${srcProd}.connectionInfo`);
+    setValue(`licenseInfo.licenses.${licIndex}.products.${prodIndex}.connectionInfo`, {
       ...src,
       serverPassword: '',
       password: '',
@@ -90,7 +94,7 @@ function ProductConnectionFields({
     setCopySelectValue('');
   };
 
-  const base = `licenseInfo.products.${index}.connectionInfo`;
+  const base = `licenseInfo.licenses.${licIndex}.products.${prodIndex}.connectionInfo`;
   const hint = isEdit ? t('customers.passwordHint') : undefined;
 
   return (
@@ -107,7 +111,9 @@ function ProductConnectionFields({
           >
             <option value="" disabled>{t('customers.copyConnectionFrom')}</option>
             {otherProducts.map((op) => (
-              <option key={op.index} value={op.index}>{op.label}</option>
+              <option key={`${op.licIndex}:${op.prodIndex}`} value={`${op.licIndex}:${op.prodIndex}`}>
+                {op.label}
+              </option>
             ))}
           </select>
         )}
@@ -146,34 +152,43 @@ const EMPTY_CONNECTION = {
   password: '',
 };
 
-export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
+/** Inner component — manages products within a single license entry. */
+function LicenseProductsSection({
+  licIndex,
+  isEdit,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  productMap,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  allProducts,
+  licenseModeOptions,
+  licenseTypeOptions,
+}: {
+  licIndex: number;
+  isEdit: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  productMap: Map<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  allProducts: any[];
+  licenseModeOptions: { value: string; label: string }[];
+  licenseTypeOptions: { value: string; label: string }[];
+}) {
   const { t } = useTranslation();
   const { lang } = useAuth();
-  const { control, register } = useFormContext<CustomerFormValues>();
-  const { fields, append, remove } = useFieldArray({ control, name: 'licenseInfo.products' });
-
-  const { data: allProducts = [] } = useQuery({
-    queryKey: queryKeys.products.all,
-    queryFn: getProducts,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { control, register, getValues } = useFormContext() as any;
+  const { fields, append, remove } = useFieldArray({
+    control,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    name: `licenseInfo.licenses.${licIndex}.products` as any,
   });
+  const confirmRemove = useConfirmDialog();
 
-  const licenseTypeOptions = LICENSE_TYPE_IDS.map((id) => ({
-    value: id,
-    label: t(`licenseTypes.${id}`),
-  }));
-
-  const productMap = React.useMemo(
-    () => new Map((Array.isArray(allProducts) ? allProducts : []).map((p) => [p.id, p])),
-    [allProducts],
-  );
-
-  // Track which blocks are expanded; new items auto-expand
   const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
   const prevLengthRef = React.useRef(fields.length);
   React.useEffect(() => {
     if (fields.length > prevLengthRef.current) {
-      const newField = fields[fields.length - 1];
-      setExpandedIds((prev) => { const s = new Set(prev); s.add(newField.id); return s; });
+      const newField = fields[fields.length - 1] as { id: string };
+      if (newField) setExpandedIds((prev) => { const s = new Set(prev); s.add(newField.id); return s; });
     }
     prevLengthRef.current = fields.length;
   }, [fields]);
@@ -186,9 +201,8 @@ export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
     });
   };
 
-  // Controlled select value so it resets after each add
   const [selectValue, setSelectValue] = React.useState('');
-  const addedIds = new Set(fields.map((f) => f.productId));
+  const addedIds = new Set((fields as unknown as { productId: string }[]).map((f) => f.productId));
   const availableToAdd = (Array.isArray(allProducts) ? allProducts : []).filter(
     (p) => !p.isBlocked && !addedIds.has(p.id),
   );
@@ -196,34 +210,47 @@ export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
   const handleAddProduct = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const productId = e.target.value;
     if (!productId) return;
-    append({ productId, licenseTypeId: '', endDate: '', hardwareKey: '', licenseKey: '', licenseData: {}, connectionInfo: { ...EMPTY_CONNECTION } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (append as any)({
+      productId,
+      licenseModeId: '',
+      licenseTypeId: '',
+      endDate: '',
+      track: false,
+      licenseKey: '',
+      licenseData: {},
+      connectionInfo: { ...EMPTY_CONNECTION },
+    });
     setSelectValue('');
   };
 
   return (
     <div className="space-y-2">
-      {fields.map((field, index) => {
+      {(fields as unknown as { id: string; productId: string }[]).map((field, prodIndex) => {
         const product = productMap.get(field.productId);
         const productName = product ? resolveTranslation(product.name, lang) : field.productId;
         const template = product?.licenseTemplate ?? [];
         const isExpanded = expandedIds.has(field.id);
 
-        const otherProducts = fields
-          .map((f, i) => ({ index: i, label: productMap.get(f.productId) ? resolveTranslation(productMap.get(f.productId)!.name, lang) : f.productId }))
-          .filter((_, i) => i !== index);
+        const otherProductsInLicense = (fields as unknown as { id: string; productId: string }[])
+          .map((f, i) => ({
+            licIndex,
+            prodIndex: i,
+            label: productMap.get(f.productId)
+              ? resolveTranslation(productMap.get(f.productId).name, lang)
+              : f.productId,
+          }))
+          .filter((_, i) => i !== prodIndex);
 
         return (
-          <div key={field.id} className="border border-gray-200 rounded-md overflow-hidden">
-            {/* Header row — always visible */}
+          <div key={field.id} className="border border-gray-200 rounded-md overflow-hidden ml-2">
             <div className="flex items-center gap-2 px-3 py-2 bg-gray-50">
               <button
                 type="button"
                 className="flex items-center gap-2 flex-1 text-left text-sm font-medium text-gray-700 hover:text-gray-900"
                 onClick={() => toggleExpand(field.id)}
               >
-                <span
-                  className={`text-xs inline-block transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
-                >
+                <span className={`text-xs inline-block transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}>
                   ▶
                 </span>
                 {productName}
@@ -234,29 +261,43 @@ export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
                 size="sm"
                 className="text-red-500 hover:text-red-700 shrink-0"
                 onClick={() => {
-                  remove(index);
-                  setExpandedIds((prev) => { const s = new Set(prev); s.delete(field.id); return s; });
+                  confirmRemove.requestConfirm(async () => {
+                    remove(prodIndex);
+                    setExpandedIds((prev) => { const s = new Set(prev); s.delete(field.id); return s; });
+                  });
                 }}
               >
                 ✕
               </Button>
             </div>
 
-            {/* Expanded body */}
             {isExpanded && (
               <div className="px-3 py-3 space-y-3 border-t border-gray-100">
-                {/* License fields */}
                 <Controller
                   control={control}
-                  name={`licenseInfo.products.${index}.licenseTypeId`}
-                  render={({ field }) => (
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  name={`licenseInfo.licenses.${licIndex}.products.${prodIndex}.licenseModeId` as any}
+                  render={({ field: f }) => (
                     <Select
-                      {...field}
-                      id={`licenseInfo.products.${index}.licenseTypeId`}
+                      {...f}
+                      id={`lic-${licIndex}-prod-${prodIndex}-licenseModeId`}
+                      label={t('customers.licenseMode')}
+                      options={licenseModeOptions}
+                      placeholder="— Select —"
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  name={`licenseInfo.licenses.${licIndex}.products.${prodIndex}.licenseTypeId` as any}
+                  render={({ field: f }) => (
+                    <Select
+                      {...f}
+                      id={`lic-${licIndex}-prod-${prodIndex}-licenseTypeId`}
                       label={t('customers.licenseType')}
                       options={licenseTypeOptions}
                       placeholder="— Select —"
-                      required
                     />
                   )}
                 />
@@ -264,35 +305,36 @@ export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
                   label={t('customers.endDate')}
                   type="date"
                   required
-                  {...register(`licenseInfo.products.${index}.endDate`)}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  {...register(`licenseInfo.licenses.${licIndex}.products.${prodIndex}.endDate` as any)}
                 />
-                <Input
-                  label={t('customers.hardwareKey')}
-                  {...register(`licenseInfo.products.${index}.hardwareKey`)}
+                <Checkbox
+                  label={t('customers.track')}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  {...register(`licenseInfo.licenses.${licIndex}.products.${prodIndex}.track` as any)}
                 />
-                <Input
-                  label={t('customers.licenseKey')}
-                  {...register(`licenseInfo.products.${index}.licenseKey`)}
-                />
+                <CopyableInput
+                    label={t('customers.licenseKey')}
+                    value={getValues(`licenseInfo.licenses.${licIndex}.products.${prodIndex}.licenseKey`) ?? ''}
+                  />
                 {template.length === 0 ? (
                   <p className="text-xs text-gray-400">{t('customers.noLicenseTemplate')}</p>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {template.map((tf) => (
+                    {template.map((tf: LicenseTemplateField) => (
                       <LicenseFieldInput
                         key={tf.name}
                         templateField={tf}
-                        fieldPath={`licenseInfo.products.${index}.licenseData.${tf.name}`}
+                        fieldPath={`licenseInfo.licenses.${licIndex}.products.${prodIndex}.licenseData.${tf.name}`}
                       />
                     ))}
                   </div>
                 )}
-
-                {/* Per-product connection info */}
                 <ProductConnectionFields
-                  index={index}
+                  licIndex={licIndex}
+                  prodIndex={prodIndex}
                   isEdit={isEdit}
-                  otherProducts={otherProducts}
+                  otherProducts={otherProductsInLicense}
                 />
               </div>
             )}
@@ -301,7 +343,7 @@ export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
       })}
 
       {fields.length === 0 && (
-        <p className="text-sm text-gray-400 text-center py-3">{t('common.noData')}</p>
+        <p className="text-sm text-gray-400 text-center py-2">{t('common.noData')}</p>
       )}
 
       {availableToAdd.length > 0 && (
@@ -318,7 +360,162 @@ export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
           ))}
         </select>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmRemove.isOpen}
+        onClose={confirmRemove.close}
+        onConfirm={confirmRemove.confirm}
+        title={t('customers.removeProductTitle')}
+        message={t('customers.removeProductMessage')}
+      />
     </div>
+  );
+}
+
+export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
+  const { t } = useTranslation();
+  const { lang } = useAuth();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { control, register, watch, formState: { errors } } = useFormContext() as any;
+  const { fields, append, remove } = useFieldArray({ control, name: 'licenseInfo.licenses' });
+  const confirmRemoveLicense = useConfirmDialog();
+
+  const { data: allProducts = [] } = useQuery({
+    queryKey: queryKeys.products.all,
+    queryFn: getProducts,
+  });
+
+  const { data: licenseTypeDictItems = [] } = useQuery({
+    queryKey: queryKeys.dict('licenseTypes'),
+    queryFn: () => getDictionary('licenseTypes'),
+  });
+
+  const licenseModeOptions = LICENSE_MODE_IDS.map((id) => ({
+    value: id,
+    label: t(`licenseModes.${id}`),
+  }));
+
+  const licenseTypeOptions = licenseTypeDictItems.map((lt) => ({
+    value: lt.id,
+    label: resolveTranslation(lt.name, lang),
+  }));
+
+  const productMap = React.useMemo(
+    () => new Map((Array.isArray(allProducts) ? allProducts : []).map((p) => [p.id, p])),
+    [allProducts],
+  );
+
+  const [expandedLicIds, setExpandedLicIds] = React.useState<Set<string>>(new Set());
+  const prevLengthRef = React.useRef(fields.length);
+  React.useEffect(() => {
+    if (fields.length > prevLengthRef.current) {
+      const newField = fields[fields.length - 1];
+      if (newField) setExpandedLicIds((prev) => { const s = new Set(prev); s.add(newField.id); return s; });
+    }
+    prevLengthRef.current = fields.length;
+  }, [fields]);
+
+  const toggleLicense = (id: string) => {
+    setExpandedLicIds((prev) => {
+      const s = new Set(prev);
+      if (s.has(id)) s.delete(id); else s.add(id);
+      return s;
+    });
+  };
+
+  const handleAddLicense = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (append as (value: any) => void)({ name: '', hardwareKey: '', appId: '', products: [] });
+  };
+
+  return (
+    <>
+      <div className="space-y-3">
+        {fields.map((licField, licIndex) => {
+          const isExpanded = expandedLicIds.has(licField.id);
+          return (
+            <div key={licField.id} className="border border-gray-300 rounded-md overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gray-100">
+                <button
+                  type="button"
+                  className="flex items-center gap-2 flex-1 text-left text-sm font-semibold text-gray-700 hover:text-gray-900"
+                  onClick={() => toggleLicense(licField.id)}
+                >
+                  <span className={`text-xs inline-block transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}>
+                    ▶
+                  </span>
+                  {t('customers.license')} #{licIndex + 1}
+                </button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-500 hover:text-red-700 shrink-0"
+                  onClick={() => confirmRemoveLicense.requestConfirm(async () => {
+                    remove(licIndex);
+                    setExpandedLicIds((prev) => { const s = new Set(prev); s.delete(licField.id); return s; });
+                  })}
+                >
+                  ✕
+                </Button>
+              </div>
+
+              {isExpanded && (
+                <div className="px-3 py-3 space-y-3 border-t border-gray-200">
+                  <Input
+                    label={t('customers.licenseName')}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    {...register(`licenseInfo.licenses.${licIndex}.name` as any)}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    error={(errors as any)?.licenseInfo?.licenses?.[licIndex]?.name?.message
+                      ? t(`customers.${(errors as any).licenseInfo.licenses[licIndex].name.message}`)
+                      : undefined}
+                  />
+                  <Input
+                    label={t('customers.hardwareKey')}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    {...register(`licenseInfo.licenses.${licIndex}.hardwareKey` as any)}
+                  />
+                  <CopyableInput
+                    label={t('customers.appId')}
+                    value={watch(`licenseInfo.licenses.${licIndex}.appId`) ?? ''}
+                  />
+                  <div className="pt-1">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      {t('customers.productTypes')}
+                    </p>
+                    <LicenseProductsSection
+                      licIndex={licIndex}
+                      isEdit={isEdit}
+                      allProducts={Array.isArray(allProducts) ? allProducts : []}
+                      productMap={productMap}
+                      licenseModeOptions={licenseModeOptions}
+                      licenseTypeOptions={licenseTypeOptions}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {fields.length === 0 && (
+          <p className="text-sm text-gray-400 text-center py-3">{t('common.noData')}</p>
+        )}
+
+        <Button type="button" variant="secondary" size="sm" onClick={handleAddLicense}>
+          + {t('customers.addLicense')}
+        </Button>
+      </div>
+
+      <ConfirmDialog
+        isOpen={confirmRemoveLicense.isOpen}
+        onClose={confirmRemoveLicense.close}
+        onConfirm={confirmRemoveLicense.confirm}
+        title={t('customers.removeLicenseTitle')}
+        message={t('customers.removeLicenseMessage')}
+      />
+    </>
   );
 }
 

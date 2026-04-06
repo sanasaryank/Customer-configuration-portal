@@ -12,8 +12,9 @@ import { Checkbox } from '../../components/ui/Checkbox';
 export interface RenewLicenseProduct {
   productId: string;
   name: string;
-  licenseTypeId: string;
+  licenseModeId: string;
   endDate: number;
+  track: boolean;
 }
 
 interface RenewLicenseModalProps {
@@ -81,16 +82,20 @@ export default function RenewLicenseModal({
 
   // Filter out lifetime products
   const eligibleProducts = useMemo(
-    () => products.filter((p) => p.licenseTypeId !== 'lifetime'),
+    () => products.filter((p) => p.licenseModeId !== 'lifetime'),
     [products],
   );
 
   const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(products.filter((p) => p.licenseTypeId !== 'lifetime').map((p) => p.productId)),
+    () => new Set(products.filter((p) => p.licenseModeId !== 'lifetime').map((p) => p.productId)),
   );
 
   const [endDates, setEndDates] = useState<Record<string, string>>(
-    () => Object.fromEntries(products.filter((p) => p.licenseTypeId !== 'lifetime').map((p) => [p.productId, unixToDateInput(p.endDate)])),
+    () => Object.fromEntries(products.filter((p) => p.licenseModeId !== 'lifetime').map((p) => [p.productId, unixToDateInput(p.endDate)])),
+  );
+
+  const [tracks, setTracks] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(products.filter((p) => p.licenseModeId !== 'lifetime').map((p) => [p.productId, p.track ?? false])),
   );
 
   const { data: holidayList = [] } = useQuery({
@@ -108,6 +113,7 @@ export default function RenewLicenseModal({
         Array.from(selected).map((productId) => ({
           productId,
           endDate: dateInputToUnix(endDates[productId] ?? ''),
+          track: tracks[productId] ?? false,
         })),
       ),
     onSuccess: (updated) => {
@@ -136,7 +142,7 @@ export default function RenewLicenseModal({
   };
 
   const handleAutoUpdate = (p: RenewLicenseProduct) => {
-    const type = p.licenseTypeId as 'monthly' | 'yearly';
+    const type = p.licenseModeId as 'monthly' | 'yearly';
     setEndDates((prev) => ({ ...prev, [p.productId]: calcAutoEndDate(type, holidays) }));
   };
 
@@ -158,7 +164,7 @@ export default function RenewLicenseModal({
             />
             <div className="border-t border-gray-100 pt-2 pb-1 space-y-3 max-h-80 overflow-y-auto overflow-x-visible px-1">
               {eligibleProducts.map((p) => {
-                const showAutoUpdate = p.licenseTypeId === 'monthly' || p.licenseTypeId === 'yearly';
+                const showAutoUpdate = p.licenseModeId === 'monthly' || p.licenseModeId === 'yearly';
                 return (
                   <div key={p.productId} className="space-y-1">
                     <Checkbox
@@ -189,6 +195,16 @@ export default function RenewLicenseModal({
                         </Button>
                       )}
                     </div>
+                    <div className="pl-6">
+                      <Checkbox
+                        label={t('customers.track')}
+                        checked={tracks[p.productId] ?? false}
+                        onChange={(e) =>
+                          setTracks((prev) => ({ ...prev, [p.productId]: e.target.checked }))
+                        }
+                        disabled={!selected.has(p.productId)}
+                      />
+                    </div>
                   </div>
                 );
               })}
@@ -197,7 +213,7 @@ export default function RenewLicenseModal({
         )}
 
         {mutation.isError && (
-          <p className="text-sm text-red-600">{t('common.errorOccurred')}</p>
+          <p className="text-sm text-red-600">{mutation.error?.message || t('common.errorOccurred')}</p>
         )}
 
         <div className="flex justify-end gap-2 pt-2">

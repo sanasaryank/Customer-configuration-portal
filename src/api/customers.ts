@@ -30,13 +30,24 @@ export async function updateCustomer(
   return put<Customer>(`${ENDPOINTS.CUSTOMERS}/${id}`, payload);
 }
 
-export async function moveLicense(srcId: string, dstId: string, productId: string): Promise<void> {
-  return post<void>(`${ENDPOINTS.CUSTOMERS_MOVE_LICENSE}/${dstId}`, { srcId, productId });
+export interface MoveLicensePayload {
+  source: {
+    srcId: string;
+    license: string;
+    productId: string;
+  };
+  destination: {
+    license: string;
+  };
+}
+
+export async function moveLicense(dstId: string, payload: MoveLicensePayload): Promise<void> {
+  return post<void>(`${ENDPOINTS.CUSTOMERS_MOVE_LICENSE}/${dstId}`, payload);
 }
 
 export async function renewLicense(
   customerId: string,
-  products: { productId: string; endDate: number }[],
+  products: { productId: string; endDate: number; track: boolean }[],
 ): Promise<Customer> {
   return post<Customer>(
     `${ENDPOINTS.CUSTOMERS_RENEW_LICENSE}/${customerId}`,

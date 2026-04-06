@@ -1,4 +1,4 @@
-// Armenian locale
+﻿// Armenian locale
 // NOTE: Non-blocking assumption — actual Armenian translations require a human translator.
 // Placeholder values use Armenian Unicode strings where known; otherwise English fallback is used.
 const arm = {
@@ -37,6 +37,10 @@ const arm = {
     logout: 'Ելք',
     confirmDelete: 'Վստա՞հ եք, որ ցանկանում եք ջնջել այս տարրը:',
     deleteTitle: 'Ջնջման հաստատում',
+    confirmBlock: 'Վստա՞հ եք, որ ցանկանում եք արգելափակել {{name}}-ը:',
+    confirmUnblock: 'Վստա՞հ եք, որ ցանկանում եք ապաարգելափակել {{name}}-ը:',
+    blockTitle: 'Արգելափակման հաստատում',
+    unblockTitle: 'Ապաարգելափակման հաստատում',
     errorOccurred: 'Տեղի է ունեցել սխալ։ Խնդրում ենք փորձել կրկին։',
     validationError: 'Որոշ դաշտեր սխալ են կամ լրացված չեն։ Խնդրում ենք ստուգել բոլոր ներդիրները։',
     backToList: 'Վերադառնալ ցանկ',
@@ -48,6 +52,9 @@ const arm = {
     clearSearch: 'Մաքրել',
     all: 'Բոլորը',
     update: 'Թարմացնել',
+    copy: 'Պատճենել',
+    copyToClipboard: 'Պատճենել clipboard-ին',
+    copied: 'Պատճենված է!',
   },
 
   // Նույնականացում
@@ -81,6 +88,7 @@ const arm = {
     countries: 'Երկրներ',
     cities: 'Քաղաքներ',
     districts: 'Շրջաններ',
+    licenseTypes: 'Լիցենզիայի տեսակներ',
   },
 
   // Թարգմանության խմբագիր
@@ -182,20 +190,25 @@ const arm = {
     serverPassword: 'Սերվերի գաղտնաբառ',
     username: 'Օգտանուն',
     password: 'Գաղտնաբառ',
+    licenseMode: 'Լիցենզիայի ռեժիմ',
     licenseType: 'Լիցենզիայի տեսակ',
     endDate: 'Ավարտի ամսաթիվ',
     hardwareKey: 'Սարքային բանալի',
+    appId: 'Applikatsia ID',
     licenseKey: 'Լիցենզիայի բանալի',
     productId: 'Պրոդուկտ',
     moveLicense: 'Տեղափոխել լիցենզիան',
     moveLicenseTitle: 'Լիցենզիայի տեղափոխում',
-    moveLicenseFrom: 'Աղբյուր հաճախորդ',
+    moveLicenseFrom: 'Լիցենզիայի աղբյուր',
     moveLicenseConfirm: 'Տեղափոխել',
+    moveLicenseConfirmMessage: 'Արդյոք կուզե՞ք տեղափոխել այս արտadriqy enger licenzia?',
     moveLicenseProduct: 'Ընտրեք արտադրանքը տեղափոխելու համար',
     renewLicense: 'Նորոգել լիցենզիան',
     renewLicenseTitle: 'Լիցենզիայի նորոգում',
     renewLicenseConfirm: 'Նորոգել',
     addProduct: 'Ավելացնել ապրանք',
+    removeProductTitle: 'Հեռացնել ապրանքը',
+    removeProductMessage: 'Արդյոք կուզե՞ք հեռացնել այս ապրանքի լիցենզիայի բլոկը:',
     copyConnectionFrom: 'Պատճենել կապը',
     addUser: 'Ավելացնել օգտատեր',
     restoreEmail: 'Վերականգնման էլ. հասցե',
@@ -204,13 +217,33 @@ const arm = {
     productTypes: 'Պրոդուկտների տեսակներ',
     lastUpdate: 'Վերջին թարմացում',
     passwordHint: 'Թողնել դատարկ՝ առկա գաղտնաբառը պահպանելու համար',
+    track: 'Հետևել',
+    shareLicense: 'Կիսառել լիցենզիա',
+    shareTitle: 'Լիցենզիայի կիսառում',
+    shareToFile: 'Պահպանել ֆայլում',
+    shareEmail: 'Ուղարկել էլ. հասցեով',
+    shareEmailLabel: 'Էլ. հասցե',
+    shareConfirm: 'Կիսառել',
+    licenseTypeFilter: 'Լիցենզիայի տեսակ',
+    license: 'Լիցենզիա',
+    licenseName: 'Լիցենզիայի անուն',
+    addLicense: 'Ավելացնել լիցենզիա',
+    removeLicenseTitle: 'Հեռացնել լիցենզիան',
+    removeLicenseMessage: 'Արդյոք կուզե՞ք հեռացնել այս լիցենզիայի բլոկը:',
+    moveLicenseSrcLicense: 'Տեղափոխվող լիցենզիա',
+    moveLicenseDstCustomer: 'Ստացող հաճախորդ',
+    moveLicenseDstLicense: 'Ստացող հաճախորդի լիցենզիա',
+    moveLicenseExisting: 'Գոյություն ունեցող լիցենզիա',
+    moveLicenseNew: 'Նոր լիցենզիա',
+    licenseNameDuplicate: 'Լիցենզիայի անունը պետք է լինի եզակի',
   },
 
-  // Լիցենզիայի տեսակներ
-  licenseTypes: {
+  // Լիցենզիայի ռեժիմներ
+  licenseModes: {
     monthly: 'Ամսական',
     yearly: 'Տարեկան',
-    manual: 'Ձեռնական',
+    manual: 'Հայեցական (ձեռքով)',
+    temporary: 'Ժամանակավոր',
     lifetime: 'Անժամկետ',
   },
 
@@ -262,8 +295,8 @@ const arm = {
   // Տեղեկատու (ընդհանուր)
   dictionary: {
     title: 'Տեղեկատու',
-    createTitle: 'Ստեղծել տարր',
-    editTitle: 'Խմբագրել տարրը',
+    createTitle: 'Ստեղծել',
+    editTitle: 'Խմբագրել',
   },
 } as const;
 

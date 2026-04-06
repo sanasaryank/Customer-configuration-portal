@@ -25,7 +25,9 @@ export function UsersTab({ isEdit }: { isEdit: boolean }) {
   });
 
   // Only products with hasUsers=true that are in the customer's licenseInfo
-  const licenseProductIds = new Set((watch('licenseInfo.products') ?? []).map((lp) => lp.productId));
+  const licenseProductIds = new Set(
+    (watch('licenseInfo.licenses') ?? []).flatMap((lic: any) => lic.products ?? []).map((lp: any) => lp.productId),
+  );
   const userProducts = Array.isArray(allProducts)
     ? allProducts.filter((p) => p.hasUsers && !p.isBlocked && licenseProductIds.has(p.id))
     : [];

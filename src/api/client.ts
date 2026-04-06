@@ -5,6 +5,23 @@ const debugHeaders: Record<string, string> = import.meta.env.DEV
   ? { 'X-Origin': 'cpp.apihub.am' }
   : {};
 
+const HTTP_STATUS_DESCRIPTIONS: Record<number, string> = {
+  400: 'Bad Request',
+  401: 'Unauthorized',
+  403: 'Forbidden',
+  404: 'Not Found',
+  405: 'Method Not Allowed',
+  408: 'Request Timeout',
+  409: 'Conflict',
+  410: 'Gone',
+  422: 'Unprocessable Entity',
+  429: 'Too Many Requests',
+  500: 'Internal Server Error',
+  502: 'Bad Gateway',
+  503: 'Service Unavailable',
+  504: 'Gateway Timeout',
+};
+
 export class HttpError extends Error {
   constructor(
     public readonly status: number,
@@ -21,13 +38,18 @@ async function handleResponse<T>(res: Response, skipRedirectOn401 = false): Prom
     return undefined as unknown as T;
   }
   if (!res.ok) {
-    let message = `HTTP ${res.status}`;
+    const fallback =
+      res.statusText ||
+      HTTP_STATUS_DESCRIPTIONS[res.status] ||
+      `HTTP ${res.status}`;
+    let message = fallback;
     try {
       const body = await res.json();
-      if (typeof body?.message === 'string') message = body.message;
-      else if (typeof body?.error === 'string') message = body.error;
+      if (typeof body?.code === 'number' && typeof body?.message === 'string' && body.message) {
+        message = body.message;
+      }
     } catch {
-      // ignore parse errors
+      // ignore parse errors — use fallback
     }
     throw new HttpError(res.status, message);
   }

@@ -22,15 +22,23 @@ import type { TableColumn } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
 import { Pagination } from '../../components/ui/Pagination';
 import { Spinner } from '../../components/ui/Spinner';
-import { RowActions, IconEdit, IconLock, IconUnlock, IconHistory, IconMoveLicense, IconRenewLicense } from '../../components/ui/RowActions';
+import { RowActions, IconEdit, IconLock, IconUnlock, IconHistory, IconMoveLicense, IconRenewLicense, IconShare } from '../../components/ui/RowActions';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import CustomerModal from './CustomerModal';
 import MoveLicenseModal from './MoveLicenseModal';
-import type { MoveLicenseProduct } from './MoveLicenseModal';
+import type { MoveLicenseLicense } from './MoveLicenseModal';
 import RenewLicenseModal from './RenewLicenseModal';
 import type { RenewLicenseProduct } from './RenewLicenseModal';
+import ShareLicenseModal from './ShareLicenseModal';
+import type { ShareLicenseSource } from './ShareLicenseModal';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 import { formatTimestamp } from '../../utils/timestamp';
+
+/** Flatten all products across all licenses for filtering/sorting/display. */
+function getLicenseProducts(licenseInfo: CustomerListItem['licenseInfo'] | undefined) {
+  return (licenseInfo?.licenses ?? []).flatMap((l) => l.products ?? []);
+}
 
 export default function CustomersPage() {
   const { t } = useTranslation();
@@ -38,8 +46,10 @@ export default function CustomersPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [modalEditId, setModalEditId] = useState<string | null | undefined>(undefined);
-  const [moveLicenseSrc, setMoveLicenseSrc] = useState<{ id: string; name: string; products: MoveLicenseProduct[] } | null>(null);
+  const [moveLicenseSrc, setMoveLicenseSrc] = useState<{ id: string; name: string; licenses: MoveLicenseLicense[] } | null>(null);
   const [renewLicenseSrc, setRenewLicenseSrc] = useState<{ id: string; name: string; products: RenewLicenseProduct[]; countryId: string } | null>(null);
+  const [confirmBlock, setConfirmBlock] = useState<{ id: string; name: string; isBlocked: boolean } | null>(null);
+  const [shareLicenseSrc, setShareLicenseSrc] = useState<ShareLicenseSource | null>(null);
   const filterValues = useFilterValues();
 
   const { data = [], isLoading } = useQuery({
@@ -58,6 +68,10 @@ export default function CustomersPage() {
   const { data: products = [] } = useQuery({
     queryKey: queryKeys.products.all,
     queryFn: getProducts,
+  });
+  const { data: licenseTypeDictItems = [] } = useQuery({
+    queryKey: queryKeys.dict('licenseTypes'),
+    queryFn: () => getDictionary('licenseTypes'),
   });
 
   const groupMap = React.useMemo(() => buildLookupMap(customerGroups, lang), [customerGroups, lang]);
@@ -85,14 +99,21 @@ export default function CustomersPage() {
     () => customerStatuses.map((s) => ({ value: s.id, label: resolveTranslation(s.name, lang) })),
     [customerStatuses, lang],
   );
+  const licenseTypeOptions = useMemo(
+    () => licenseTypeDictItems.map((lt) => ({ value: lt.id, label: resolveTranslation(lt.name, lang) })),
+    [licenseTypeDictItems, lang],
+  );
   useRegisterFilterOptions('group', groupOptions);
   useRegisterFilterOptions('productTypes', productTypeOptions);
+  useRegisterFilterOptions('licenseType', licenseTypeOptions);
   useRegisterFilterOptions('status', statusOptions);
 
   const filterFields = useMemo<FilterField<CustomerListItem>[]>(() => [
     { key: 'name',         extract: (item) => extractTranslation(item.generalInfo?.name, lang) },
     { key: 'group',        extract: (item) => item.generalInfo?.groupId ?? '',          matchMode: 'exact' },
-    { key: 'productTypes', extract: (item) => (item.licenseInfo?.products ?? []).map((p) => p.productId).join(','), matchMode: 'array' },
+    { key: 'productTypes', extract: (item) => getLicenseProducts(item.licenseInfo).map((p) => p.productId).join(','), matchMode: 'array' },
+    { key: 'licenseMode',  extract: (item) => getLicenseProducts(item.licenseInfo).map((p) => p.licenseModeId).join(','), matchMode: 'array' },
+    { key: 'licenseType',  extract: (item) => getLicenseProducts(item.licenseInfo).map((p) => p.licenseTypeId).join(','), matchMode: 'array' },
     { key: 'status',       extract: (item) => item.generalInfo?.statusId ?? '',         matchMode: 'exact' },
     { key: 'isBlocked',    extract: (item) => item.generalInfo?.isBlocked ? 'blocked' : 'active',   matchMode: 'exact' },
   ], [lang]);
@@ -101,9 +122,9 @@ export default function CustomersPage() {
     id: (item) => item.id,
     name: (item) => resolveTranslation(item.generalInfo?.name, lang),
     group: (item) => resolveId(item.generalInfo?.groupId, groupMap),
-    productTypes: (item) => resolveIds((item.licenseInfo?.products ?? []).map((p) => p.productId), productMap),
+    productTypes: (item) => resolveIds(getLicenseProducts(item.licenseInfo).map((p) => p.productId), productMap),
     endDate: (item) => {
-      const dates = (item.licenseInfo?.products ?? [])
+      const dates = getLicenseProducts(item.licenseInfo)
         .map((p) => p.endDate)
         .filter((d): d is number => typeof d === 'number' && d > 0);
       return dates.length === 0 ? '0' : String(Math.min(...dates));
@@ -129,6 +150,7 @@ export default function CustomersPage() {
   const handleSort = useCallback((key: string) => {
     listOps.setSort({ key, direction: listOps.sort?.key === key && listOps.sort.direction === 'asc' ? 'desc' : 'asc' });
   }, [listOps]);
+
 
   // ── Product chip helpers ──────────────────────────────────────────────────
 
@@ -249,7 +271,7 @@ export default function CustomersPage() {
       sortable: true,
       className: 'max-w-[160px]',
       render: (row) => {
-        const ids = (row.licenseInfo?.products ?? []).map((p) => p.productId);
+        const ids = getLicenseProducts(row.licenseInfo).map((p) => p.productId);
         if (ids.length === 0) return <span className="text-gray-400">—</span>;
         return (
           <div className="flex flex-wrap gap-1 max-w-[160px]">
@@ -267,11 +289,41 @@ export default function CustomersPage() {
       },
     },
     {
+      key: 'licenseTypes',
+      header: t('customers.licenseType'),
+      className: 'max-w-[120px]',
+      render: (row) => {
+        const ids = [...new Set(getLicenseProducts(row.licenseInfo).map((p) => p.licenseTypeId).filter(Boolean))];
+        if (ids.length === 0) return <span className="text-gray-400">—</span>;
+        return (
+          <div className="flex flex-wrap gap-1 max-w-[120px]">
+            {ids.map((id) => {
+              const dictItem = licenseTypeDictItems.find((x) => x.id === id);
+              const fullName = dictItem ? resolveTranslation(dictItem.name, lang) : id;
+              const words = fullName.trim().split(/\s+/);
+              const abbr = words.length >= 2
+                ? words.map((w) => w[0] ?? '').join('').slice(0, 3).toUpperCase()
+                : fullName.slice(0, 3).toUpperCase();
+              return (
+                <span
+                  key={id}
+                  title={fullName}
+                  className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-semibold tracking-wide ${chipColorClass(id)}`}
+                >
+                  {abbr}
+                </span>
+              );
+            })}
+          </div>
+        );
+      },
+    },
+    {
       key: 'endDate',
       header: t('customers.endDate'),
       sortable: true,
       render: (row) => {
-        const dates = (row.licenseInfo?.products ?? [])
+        const dates = getLicenseProducts(row.licenseInfo)
           .map((p) => p.endDate)
           .filter((d): d is number => typeof d === 'number' && d > 0);
         if (dates.length === 0) return <span className="text-gray-400">—</span>;
@@ -300,10 +352,11 @@ export default function CustomersPage() {
       render: (row) => (
         <RowActions actions={[
           { key: 'edit',          icon: <IconEdit />,                                               title: t('common.edit'),              onClick: () => setModalEditId(row.id) },
-          { key: 'block',         icon: row.generalInfo?.isBlocked ? <IconLock /> : <IconUnlock />, title: row.generalInfo?.isBlocked ? t('common.unblock') : t('common.block'), variant: row.generalInfo?.isBlocked ? 'warning' as const : 'default' as const, onClick: () => blockMutation.mutate({ id: row.id, isBlocked: !row.generalInfo?.isBlocked }) },
-          { key: 'renewLicense',  icon: <IconRenewLicense />,                                       title: t('customers.renewLicense'),   onClick: () => setRenewLicenseSrc({ id: row.id, name: resolveTranslation(row.generalInfo?.name, lang), countryId: row.contactInfo?.geo?.countryId ?? '', products: (row.licenseInfo?.products ?? []).map((p) => ({ productId: p.productId, name: productMap.get(p.productId) || p.productId, licenseTypeId: p.licenseTypeId ?? '', endDate: p.endDate ?? 0 })) }) },
-          { key: 'moveLicense',   icon: <IconMoveLicense />,                                        title: t('customers.moveLicense'),    onClick: () => setMoveLicenseSrc({ id: row.id, name: resolveTranslation(row.generalInfo?.name, lang), products: (row.licenseInfo?.products ?? []).map((p) => ({ productId: p.productId, name: productMap.get(p.productId) || p.productId })) }) },
-          { key: 'history',       icon: <IconHistory />,                                            title: t('common.history'),           onClick: () => navigate(`${ROUTES.HISTORY_ACTIONS}?objectId=${row.id}`) },
+          { key: 'block',         icon: row.generalInfo?.isBlocked ? <IconLock /> : <IconUnlock />, title: row.generalInfo?.isBlocked ? t('common.unblock') : t('common.block'), variant: row.generalInfo?.isBlocked ? 'warning' as const : 'default' as const, onClick: () => setConfirmBlock({ id: row.id, name: resolveTranslation(row.generalInfo?.name, lang), isBlocked: !!row.generalInfo?.isBlocked }) },
+          { key: 'renewLicense',  icon: <IconRenewLicense />,                                       title: t('customers.renewLicense'),   onClick: () => setRenewLicenseSrc({ id: row.id, name: resolveTranslation(row.generalInfo?.name, lang), countryId: row.contactInfo?.geo?.countryId ?? '', products: getLicenseProducts(row.licenseInfo).map((p) => ({ productId: p.productId, name: productMap.get(p.productId) || p.productId, licenseModeId: p.licenseModeId ?? '', endDate: p.endDate ?? 0, track: p.track ?? false })) }) },
+          { key: 'moveLicense',   icon: <IconMoveLicense />,  title: t('customers.moveLicense'),    onClick: () => setMoveLicenseSrc({ id: row.id, name: resolveTranslation(row.generalInfo?.name, lang), licenses: (row.licenseInfo?.licenses ?? []).map((lic) => ({ licenseName: lic.name, products: lic.products.map((p) => ({ productId: p.productId, name: productMap.get(p.productId) || p.productId })) })) }) },
+          { key: 'shareLicense',  icon: <IconShare />,        title: t('customers.shareLicense'),   onClick: () => setShareLicenseSrc({ id: row.id, name: resolveTranslation(row.generalInfo?.name, lang), email: row.contactInfo?.email ?? '' }) },
+          { key: 'history',       icon: <IconHistory />,      title: t('common.history'),           onClick: () => navigate(`${ROUTES.HISTORY_ACTIONS}?objectId=${row.id}`) },
         ]} />
       ),
     },
@@ -348,7 +401,7 @@ export default function CustomersPage() {
         <MoveLicenseModal
           srcId={moveLicenseSrc.id}
           srcName={moveLicenseSrc.name}
-          srcProducts={moveLicenseSrc.products}
+          srcLicenses={moveLicenseSrc.licenses}
           onClose={() => setMoveLicenseSrc(null)}
         />
       )}
@@ -360,6 +413,28 @@ export default function CustomersPage() {
           products={renewLicenseSrc.products}
           countryId={renewLicenseSrc.countryId}
           onClose={() => setRenewLicenseSrc(null)}
+        />
+      )}
+
+      {shareLicenseSrc !== null && (
+        <ShareLicenseModal
+          source={shareLicenseSrc}
+          onClose={() => setShareLicenseSrc(null)}
+        />
+      )}
+
+      {confirmBlock !== null && (
+        <ConfirmDialog
+          isOpen
+          onClose={() => setConfirmBlock(null)}
+          onConfirm={() => {
+            blockMutation.mutate({ id: confirmBlock.id, isBlocked: !confirmBlock.isBlocked });
+            setConfirmBlock(null);
+          }}
+          title={t(confirmBlock.isBlocked ? 'common.unblockTitle' : 'common.blockTitle')}
+          message={t(confirmBlock.isBlocked ? 'common.confirmUnblock' : 'common.confirmBlock', { name: confirmBlock.name })}
+          confirmLabel={t(confirmBlock.isBlocked ? 'common.unblock' : 'common.block')}
+          loading={blockMutation.isPending}
         />
       )}
     </div>

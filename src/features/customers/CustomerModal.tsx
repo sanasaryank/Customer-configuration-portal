@@ -60,25 +60,45 @@ const schema = z.object({
     email: z.string(),
   }),
   licenseInfo: z.object({
-    products: z.array(
+    licenses: z.array(
       z.object({
-        productId: z.string(),
-        licenseTypeId: z.string(),
-        endDate: z.string(),
+        name: z.string(),
         hardwareKey: z.string(),
-        licenseKey: z.string(),
-        licenseData: z.record(z.unknown()),
-        connectionInfo: z.object({
-          connectionTypeId: z.string(),
-          host: z.string(),
-          port: z.coerce.number().catch(0),
-          serverUsername: z.string(),
-          serverPassword: z.string(),
-          username: z.string(),
-          password: z.string(),
-        }),
+        appId: z.string(),
+        products: z.array(
+          z.object({
+            productId: z.string(),
+            licenseModeId: z.string().optional().or(z.literal('')),
+            licenseTypeId: z.string().optional().or(z.literal('')),
+            endDate: z.string(),
+            track: z.boolean().default(false),
+            licenseKey: z.string(),
+            licenseData: z.record(z.unknown()),
+            connectionInfo: z.object({
+              connectionTypeId: z.string(),
+              host: z.string(),
+              port: z.coerce.number().catch(0),
+              serverUsername: z.string(),
+              serverPassword: z.string(),
+              username: z.string(),
+              password: z.string(),
+            }),
+          }),
+        ),
       }),
-    ),
+    ).superRefine((licenses, ctx) => {
+      const names = licenses.map((l) => l.name.trim());
+      licenses.forEach((lic, i) => {
+        const trimmed = lic.name.trim();
+        if (trimmed && names.indexOf(trimmed) !== i) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'licenseNameDuplicate',
+            path: [i, 'name'],
+          });
+        }
+      });
+    }),
   }),
   users: z.array(
     z.object({
@@ -117,7 +137,7 @@ function defaultFormValues(): CustomerFormValues {
       phone: '',
       email: '',
     },
-    licenseInfo: { products: [] },
+    licenseInfo: { licenses: [] },
     users: [],
   };
 }
@@ -125,13 +145,16 @@ function defaultFormValues(): CustomerFormValues {
 // ---- Build write payload from form values ----
 
 function buildCreatePayload(values: CustomerFormValues): CustomerCreatePayload {
-  // Per-product: omit empty write-only passwords from each connectionInfo
-  const products = values.licenseInfo.products.map((p) => {
-    const conn = { ...p.connectionInfo } as Record<string, unknown>;
-    if (!conn['serverPassword']) delete conn['serverPassword'];
-    if (!conn['password']) delete conn['password'];
-    return { ...p, endDate: dateInputToUnix(p.endDate), connectionInfo: conn };
-  }) as unknown as CustomerCreatePayload['licenseInfo']['products'];
+  // Per-license/product: omit empty write-only passwords from each connectionInfo
+  const licenses = values.licenseInfo.licenses.map((lic) => {
+    const products = lic.products.map((p) => {
+      const conn = { ...p.connectionInfo } as Record<string, unknown>;
+      if (!conn['serverPassword']) delete conn['serverPassword'];
+      if (!conn['password']) delete conn['password'];
+      return { ...p, endDate: dateInputToUnix(p.endDate), connectionInfo: conn };
+    });
+    return { name: lic.name, hardwareKey: lic.hardwareKey, appId: lic.appId, products };
+  }) as unknown as CustomerCreatePayload['licenseInfo']['licenses'];
 
   // Omit empty passwords from users
   const users = values.users.map((u: CustomerFormUser) => {
@@ -142,7 +165,7 @@ function buildCreatePayload(values: CustomerFormValues): CustomerCreatePayload {
   return {
     generalInfo: values.generalInfo,
     contactInfo: values.contactInfo,
-    licenseInfo: { products },
+    licenseInfo: { licenses },
     users,
   };
 }
@@ -190,14 +213,20 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
         generalInfo: existing.generalInfo,
         contactInfo: existing.contactInfo,
         licenseInfo: {
-          products: (Array.isArray(existing.licenseInfo?.products) ? existing.licenseInfo.products : []).map((p) => ({
-            ...p,
-            endDate: unixToDateInput(p.endDate),
-            connectionInfo: {
-              ...p.connectionInfo,
-              serverPassword: '', // never prefill write-only
-              password: '',       // never prefill write-only
-            },
+          licenses: (Array.isArray(existing.licenseInfo?.licenses) ? existing.licenseInfo.licenses : []).map((lic) => ({
+            name: lic.name,
+            hardwareKey: lic.hardwareKey,
+            appId: lic.appId,
+            products: lic.products.map((p) => ({
+              ...p,
+              track: p.track ?? false,
+              endDate: unixToDateInput(p.endDate),
+              connectionInfo: {
+                ...p.connectionInfo,
+                serverPassword: '', // never prefill write-only
+                password: '',       // never prefill write-only
+              },
+            })),
           })),
         },
         users: (Array.isArray(existing.users) ? existing.users : []).map((u) => ({

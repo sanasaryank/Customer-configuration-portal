@@ -183,6 +183,14 @@ function buildRouter() {
               </Suspense>
             ),
           },
+          {
+            path: ROUTES.LICENSE_TYPES,
+            element: (
+              <Suspense fallback={<Fallback />}>
+                <DictionaryPage key="licenseTypes" dictKey="licenseTypes" />
+              </Suspense>
+            ),
+          },
         ],
       },
     ],
