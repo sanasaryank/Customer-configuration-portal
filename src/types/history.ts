@@ -38,7 +38,7 @@ export type HistoryDetail = NestedDiffNode;
 
 // ── License moving history ─────────────────────────────────────────────────
 
-import type { CustomerLicenseProduct } from './customer';
+import type { CustomerLicenseProduct, CustomerConnectionInfo } from './customer';
 
 // Item in GET /history/licenseMoving response
 export interface LicenseMovingItem {
@@ -46,5 +46,5 @@ export interface LicenseMovingItem {
   from: string;       // customerId
   to: string;         // customerId
   user: string;       // employeeId
-  license: CustomerLicenseProduct;
+  license: CustomerLicenseProduct & { connectionInfo: CustomerConnectionInfo };
 }

@@ -69,8 +69,8 @@ This applies to:
 
 employees.password
 customers.users[].password
-customers.licenseInfo.licenses[].products[].connectionInfo.serverPassword
-customers.licenseInfo.licenses[].products[].connectionInfo.password
+customers.licenseInfo.licenses[].connectionInfo.serverPassword
+customers.licenseInfo.licenses[].connectionInfo.password
 2.6 Blocking rule
 isBlocked exists for all entities except:
 history
@@ -470,16 +470,16 @@ frontend should allow assigning user products only for products where hasUsers =
             "endDate": 1735600000,
             "track": false,
             "licenseKey": "string",
-            "licenseData": {},
-            "connectionInfo": {
-              "connectionTypeId": "string",
-              "host": "string",
-              "port": 8020,
-              "serverUsername": "string",
-              "username": "string"
-            }
+            "licenseData": {}
           }
-        ]
+        ],
+        "connectionInfo": {
+          "connectionTypeId": "string",
+          "host": "string",
+          "port": 8020,
+          "serverUsername": "string",
+          "username": "string"
+        }
       }
     ]
   },
@@ -505,8 +505,8 @@ with hash added in GET by id / POST response / PUT payload / PUT response.
 
 Inside customer write payloads only:
 
-licenseInfo.licenses[].products[].connectionInfo.serverPassword
-licenseInfo.licenses[].products[].connectionInfo.password
+licenseInfo.licenses[].connectionInfo.serverPassword
+licenseInfo.licenses[].connectionInfo.password
 users[].password
 
 Note: lastUpdated is a read-only field set by the backend; it must not be sent in write payloads.
@@ -520,7 +520,7 @@ generalInfo.groupId -> /dictionary/customerGroups
 contactInfo.geo.countryId -> /countries
 contactInfo.geo.cityId -> /cities
 contactInfo.geo.districtId -> /districts
-licenseInfo.licenses[].products[].connectionInfo.connectionTypeId -> /dictionary/integrationTypes
+licenseInfo.licenses[].connectionInfo.connectionTypeId -> /dictionary/integrationTypes
 users[].allowedProducts[] -> product IDs (must be from licenseInfo.licenses[].products[].productId with hasUsers = true)
 5.7.4 Customer user rules
 customer users are edited only inside customer, no separate endpoints
@@ -547,16 +547,16 @@ licenseInfo.licenses[] item:
       "endDate": 1735600000,
       "track": false,
       "licenseKey": "string",
-      "licenseData": {},
-      "connectionInfo": {
-        "connectionTypeId": "string",
-        "host": "string",
-        "port": 8020,
-        "serverUsername": "string",
-        "username": "string"
-      }
+      "licenseData": {}
     }
-  ]
+  ],
+  "connectionInfo": {
+    "connectionTypeId": "string",
+    "host": "string",
+    "port": 8020,
+    "serverUsername": "string",
+    "username": "string"
+  }
 }
 
 licenseModeId values:
@@ -583,7 +583,7 @@ Each license block has a name (string), hardwareKey (string), and appId (string,
 Products are added/removed inside a license block via the "Add Product" selector within that license.
 Frontend creates a new empty product block when user adds a product via the selector.
 Frontend allows removing a product block; frontend allows removing an entire license block (removes all its products).
-Each product block contains its own connectionInfo fields; a "copy connection from" helper allows copying connection details from another product block within the same license.
+Each license block contains its own connectionInfo fields; a "copy connection from" helper allows copying connection details from another license block.
 License transfer:
   POST /customers/moveLicense/{dstId} with body { srcId, productId } moves one specific product license from the source customer to the destination customer
   The "Move License" action is available per-customer in the customer list
@@ -720,7 +720,7 @@ Rules:
 date is Unix timestamp in seconds
 from / to are customer IDs; frontend resolves to customer names
 user is employee ID; frontend resolves to employee username
-license matches the CustomerLicenseProduct shape
+license matches the CustomerLicenseProduct shape plus connectionInfo from the license level
 6. Date and time rules
 6.1 Unix timestamp unit
 
@@ -973,11 +973,11 @@ License Info tab:
     hardwareKey, licenseKey text inputs
     appId: read-only text field with copy-to-clipboard button (disabled input, never editable)
     licenseData fields driven by product.licenseTemplate (kind-based input types)
-    connectionInfo block:
-      connectionTypeId select (integration types)
-      host, port, serverUsername, username inputs
-      serverPassword, password fields (write-only, never pre-filled)
-      "copy connection from" helper to copy connection from another product block
+  connectionInfo block (per license, not per product):
+    connectionTypeId select (integration types)
+    host, port, serverUsername, username inputs
+    serverPassword, password fields (write-only, never pre-filled)
+    "copy connection from" helper to copy connection from another license block
 
 Users tab:
   user sub-forms (add/remove)

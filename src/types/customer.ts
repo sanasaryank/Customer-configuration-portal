@@ -64,7 +64,6 @@ export interface CustomerLicenseProduct {
   track: boolean;
   licenseKey: string;
   licenseData: LicenseData;
-  connectionInfo: CustomerConnectionInfo;
 }
 
 export interface CustomerLicenseProductWrite {
@@ -75,7 +74,6 @@ export interface CustomerLicenseProductWrite {
   track: boolean;
   licenseKey: string;
   licenseData: LicenseData;
-  connectionInfo: CustomerConnectionInfoWrite;
 }
 
 export interface CustomerLicenseProductForm {
@@ -86,7 +84,6 @@ export interface CustomerLicenseProductForm {
   track: boolean;
   licenseKey: string;
   licenseData: LicenseData;
-  connectionInfo: CustomerFormConnectionInfo;
 }
 
 export interface CustomerLicense {
@@ -94,6 +91,7 @@ export interface CustomerLicense {
   hardwareKey: string;
   appId: string;
   products: CustomerLicenseProduct[];
+  connectionInfo: CustomerConnectionInfo;
 }
 
 export interface CustomerLicenseWrite {
@@ -101,6 +99,7 @@ export interface CustomerLicenseWrite {
   hardwareKey: string;
   appId: string;
   products: CustomerLicenseProductWrite[];
+  connectionInfo: CustomerConnectionInfoWrite;
 }
 
 export interface CustomerLicenseForm {
@@ -108,6 +107,7 @@ export interface CustomerLicenseForm {
   hardwareKey: string;
   appId: string;
   products: CustomerLicenseProductForm[];
+  connectionInfo: CustomerFormConnectionInfo;
 }
 
 export interface CustomerLicenseInfo {

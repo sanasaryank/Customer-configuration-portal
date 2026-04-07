@@ -59,17 +59,57 @@ function LicenseFieldInput({
   );
 }
 
-/** Connection fields rendered inside each product block. */
-function ProductConnectionFields({
+/** Reusable expand/collapse block used for product items and connectionInfo. */
+function CollapsibleBlock({
+  expanded,
+  onToggle,
+  title,
+  headerRight,
+  children,
+  className,
+  headerClassName,
+}: {
+  expanded: boolean;
+  onToggle: () => void;
+  title: string;
+  headerRight?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+  headerClassName?: string;
+}) {
+  return (
+    <div className={`border rounded-md overflow-hidden ${className ?? 'border-gray-200'}`}>
+      <div className={`flex items-center gap-2 px-3 py-2 ${headerClassName ?? 'bg-gray-50'}`}>
+        <button
+          type="button"
+          className="flex items-center gap-2 flex-1 text-left text-sm font-medium text-gray-700 hover:text-gray-900"
+          onClick={onToggle}
+        >
+          <span className={`text-xs inline-block transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}>
+            ▶
+          </span>
+          {title}
+        </button>
+        {headerRight}
+      </div>
+      {expanded && (
+        <div className="px-3 py-3 space-y-3 border-t border-gray-100">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Connection fields rendered inside each license block. */
+function LicenseConnectionFields({
   licIndex,
-  prodIndex,
   isEdit,
-  otherProducts,
+  otherLicenses,
 }: {
   licIndex: number;
-  prodIndex: number;
   isEdit: boolean;
-  otherProducts: { licIndex: number; prodIndex: number; label: string }[];
+  otherLicenses: { licIndex: number; label: string }[];
 }) {
   const { t } = useTranslation();
   const { lang } = useAuth();
@@ -83,10 +123,10 @@ function ProductConnectionFields({
   const [copySelectValue, setCopySelectValue] = React.useState('');
 
   const handleCopyFrom = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const [srcLic, srcProd] = (e.target.value as string).split(':').map(Number);
-    if (Number.isNaN(srcLic) || Number.isNaN(srcProd)) return;
-    const src = getValues(`licenseInfo.licenses.${srcLic}.products.${srcProd}.connectionInfo`);
-    setValue(`licenseInfo.licenses.${licIndex}.products.${prodIndex}.connectionInfo`, {
+    const srcLic = Number(e.target.value);
+    if (Number.isNaN(srcLic)) return;
+    const src = getValues(`licenseInfo.licenses.${srcLic}.connectionInfo`);
+    setValue(`licenseInfo.licenses.${licIndex}.connectionInfo`, {
       ...src,
       serverPassword: '',
       password: '',
@@ -94,31 +134,34 @@ function ProductConnectionFields({
     setCopySelectValue('');
   };
 
-  const base = `licenseInfo.licenses.${licIndex}.products.${prodIndex}.connectionInfo`;
+  const base = `licenseInfo.licenses.${licIndex}.connectionInfo`;
   const hint = isEdit ? t('customers.passwordHint') : undefined;
 
-  return (
-    <div className="mt-3 space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-          {t('customers.connectionInfo')}
-        </span>
-        {otherProducts.length > 0 && (
-          <select
-            className="text-xs form-select py-1 pr-7 text-gray-500 border-gray-200"
-            value={copySelectValue}
-            onChange={handleCopyFrom}
-          >
-            <option value="" disabled>{t('customers.copyConnectionFrom')}</option>
-            {otherProducts.map((op) => (
-              <option key={`${op.licIndex}:${op.prodIndex}`} value={`${op.licIndex}:${op.prodIndex}`}>
-                {op.label}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
+  const [expanded, setExpanded] = React.useState(false);
 
+  const copyDropdown = otherLicenses.length > 0 ? (
+    <select
+      className="text-xs form-select py-1 pr-7 text-gray-500 border-gray-200"
+      value={copySelectValue}
+      onChange={handleCopyFrom}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <option value="" disabled>{t('customers.copyConnectionFrom')}</option>
+      {otherLicenses.map((ol) => (
+        <option key={ol.licIndex} value={ol.licIndex}>
+          {ol.label}
+        </option>
+      ))}
+    </select>
+  ) : undefined;
+
+  return (
+    <CollapsibleBlock
+      expanded={expanded}
+      onToggle={() => setExpanded((v) => !v)}
+      title={t('customers.connectionInfo')}
+      headerRight={copyDropdown}
+    >
       <DictionarySelect
         name={`${base}.connectionTypeId`}
         label={t('customers.connectionType')}
@@ -138,7 +181,7 @@ function ProductConnectionFields({
         <PasswordField name={`${base}.serverPassword`} label={t('customers.serverPassword')} hint={hint} />
         <PasswordField name={`${base}.password`} label={t('customers.password')} hint={hint} />
       </div>
-    </div>
+    </CollapsibleBlock>
   );
 }
 
@@ -219,7 +262,6 @@ function LicenseProductsSection({
       track: false,
       licenseKey: '',
       licenseData: {},
-      connectionInfo: { ...EMPTY_CONNECTION },
     });
     setSelectValue('');
   };
@@ -232,29 +274,14 @@ function LicenseProductsSection({
         const template = product?.licenseTemplate ?? [];
         const isExpanded = expandedIds.has(field.id);
 
-        const otherProductsInLicense = (fields as unknown as { id: string; productId: string }[])
-          .map((f, i) => ({
-            licIndex,
-            prodIndex: i,
-            label: productMap.get(f.productId)
-              ? resolveTranslation(productMap.get(f.productId).name, lang)
-              : f.productId,
-          }))
-          .filter((_, i) => i !== prodIndex);
-
         return (
-          <div key={field.id} className="border border-gray-200 rounded-md overflow-hidden ml-2">
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50">
-              <button
-                type="button"
-                className="flex items-center gap-2 flex-1 text-left text-sm font-medium text-gray-700 hover:text-gray-900"
-                onClick={() => toggleExpand(field.id)}
-              >
-                <span className={`text-xs inline-block transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}>
-                  ▶
-                </span>
-                {productName}
-              </button>
+          <CollapsibleBlock
+            key={field.id}
+            expanded={isExpanded}
+            onToggle={() => toggleExpand(field.id)}
+            title={productName}
+            className="ml-2 border-gray-200"
+            headerRight={
               <Button
                 type="button"
                 variant="ghost"
@@ -269,10 +296,8 @@ function LicenseProductsSection({
               >
                 ✕
               </Button>
-            </div>
-
-            {isExpanded && (
-              <div className="px-3 py-3 space-y-3 border-t border-gray-100">
+            }
+          >
                 <Controller
                   control={control}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -330,15 +355,7 @@ function LicenseProductsSection({
                     ))}
                   </div>
                 )}
-                <ProductConnectionFields
-                  licIndex={licIndex}
-                  prodIndex={prodIndex}
-                  isEdit={isEdit}
-                  otherProducts={otherProductsInLicense}
-                />
-              </div>
-            )}
-          </div>
+          </CollapsibleBlock>
         );
       })}
 
@@ -425,7 +442,7 @@ export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
 
   const handleAddLicense = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (append as (value: any) => void)({ name: '', hardwareKey: '', appId: '', products: [] });
+    (append as (value: any) => void)({ name: '', hardwareKey: '', appId: '', products: [], connectionInfo: { ...EMPTY_CONNECTION } });
   };
 
   return (
@@ -433,6 +450,9 @@ export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
       <div className="space-y-3">
         {fields.map((licField, licIndex) => {
           const isExpanded = expandedLicIds.has(licField.id);
+          const otherLicenses = fields
+            .map((f, i) => ({ licIndex: i, label: `${t('customers.license')} #${i + 1}` }))
+            .filter((_, i) => i !== licIndex);
           return (
             <div key={licField.id} className="border border-gray-300 rounded-md overflow-hidden">
               <div className="flex items-center gap-2 px-3 py-2 bg-gray-100">
@@ -479,6 +499,11 @@ export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
                   <CopyableInput
                     label={t('customers.appId')}
                     value={watch(`licenseInfo.licenses.${licIndex}.appId`) ?? ''}
+                  />
+                  <LicenseConnectionFields
+                    licIndex={licIndex}
+                    isEdit={isEdit}
+                    otherLicenses={otherLicenses}
                   />
                   <div className="pt-1">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">

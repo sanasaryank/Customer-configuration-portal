@@ -74,17 +74,17 @@ const schema = z.object({
             track: z.boolean().default(false),
             licenseKey: z.string(),
             licenseData: z.record(z.unknown()),
-            connectionInfo: z.object({
-              connectionTypeId: z.string(),
-              host: z.string(),
-              port: z.coerce.number().catch(0),
-              serverUsername: z.string(),
-              serverPassword: z.string(),
-              username: z.string(),
-              password: z.string(),
-            }),
           }),
         ),
+        connectionInfo: z.object({
+          connectionTypeId: z.string(),
+          host: z.string(),
+          port: z.coerce.number().catch(0),
+          serverUsername: z.string(),
+          serverPassword: z.string(),
+          username: z.string(),
+          password: z.string(),
+        }),
       }),
     ).superRefine((licenses, ctx) => {
       const names = licenses.map((l) => l.name.trim());
@@ -145,15 +145,15 @@ function defaultFormValues(): CustomerFormValues {
 // ---- Build write payload from form values ----
 
 function buildCreatePayload(values: CustomerFormValues): CustomerCreatePayload {
-  // Per-license/product: omit empty write-only passwords from each connectionInfo
+  // Per-license: omit empty write-only passwords from connectionInfo
   const licenses = values.licenseInfo.licenses.map((lic) => {
+    const conn = { ...lic.connectionInfo } as Record<string, unknown>;
+    if (!conn['serverPassword']) delete conn['serverPassword'];
+    if (!conn['password']) delete conn['password'];
     const products = lic.products.map((p) => {
-      const conn = { ...p.connectionInfo } as Record<string, unknown>;
-      if (!conn['serverPassword']) delete conn['serverPassword'];
-      if (!conn['password']) delete conn['password'];
-      return { ...p, endDate: dateInputToUnix(p.endDate), connectionInfo: conn };
+      return { ...p, endDate: dateInputToUnix(p.endDate) };
     });
-    return { name: lic.name, hardwareKey: lic.hardwareKey, appId: lic.appId, products };
+    return { name: lic.name, hardwareKey: lic.hardwareKey, appId: lic.appId, products, connectionInfo: conn };
   }) as unknown as CustomerCreatePayload['licenseInfo']['licenses'];
 
   // Omit empty passwords from users
@@ -221,12 +221,12 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
               ...p,
               track: p.track ?? false,
               endDate: unixToDateInput(p.endDate),
-              connectionInfo: {
-                ...p.connectionInfo,
-                serverPassword: '', // never prefill write-only
-                password: '',       // never prefill write-only
-              },
             })),
+            connectionInfo: {
+              ...lic.connectionInfo,
+              serverPassword: '', // never prefill write-only
+              password: '',       // never prefill write-only
+            },
           })),
         },
         users: (Array.isArray(existing.users) ? existing.users : []).map((u) => ({
