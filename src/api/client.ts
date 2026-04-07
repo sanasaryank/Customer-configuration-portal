@@ -32,8 +32,8 @@ export class HttpError extends Error {
   }
 }
 
-async function handleResponse<T>(res: Response, skipRedirectOn401 = false): Promise<T> {
-  if (res.status === 401 && !skipRedirectOn401) {
+async function handleResponse<T>(res: Response, skipRedirect = false): Promise<T> {
+  if (res.status === 401 && !skipRedirect) {
     window.location.href = ROUTES.LOGIN;
     return undefined as unknown as T;
   }
@@ -51,6 +51,12 @@ async function handleResponse<T>(res: Response, skipRedirectOn401 = false): Prom
     } catch {
       // ignore parse errors — use fallback
     }
+    // 502: backend is down — force local logout and redirect to login
+    if (res.status === 502 && !skipRedirect) {
+      const err = new HttpError(res.status, message);
+      scheduleLocalLogout();
+      throw err;
+    }
     throw new HttpError(res.status, message);
   }
   // 204 or empty body
@@ -59,13 +65,26 @@ async function handleResponse<T>(res: Response, skipRedirectOn401 = false): Prom
   return JSON.parse(text) as T;
 }
 
-export async function get<T>(path: string, skipRedirectOn401 = false): Promise<T> {
+/**
+ * Schedule a local-only logout: clear React Query cache and redirect to login.
+ * Uses a debounce so concurrent 502s don't trigger multiple redirects.
+ */
+let logoutTimer: ReturnType<typeof setTimeout> | null = null;
+function scheduleLocalLogout() {
+  if (logoutTimer) return;
+  logoutTimer = setTimeout(() => {
+    logoutTimer = null;
+    window.location.href = ROUTES.LOGIN;
+  }, 100);
+}
+
+export async function get<T>(path: string, skipRedirect = false): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'GET',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...debugHeaders },
   });
-  return handleResponse<T>(res, skipRedirectOn401);
+  return handleResponse<T>(res, skipRedirect);
 }
 
 export async function post<T>(path: string, body?: unknown): Promise<T> {
