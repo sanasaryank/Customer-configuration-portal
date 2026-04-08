@@ -109,7 +109,24 @@ endpoint: "/validators/{id}"
   "hash": "string",
   "version": "string",
   "endpoint": "string",
-  "schema": {}
+  "schema": {},
+  "method_rules": {
+    "POST": {
+      "forbid_fields": ["string"],
+      "add_required": ["string"],
+      "remove_required": ["string"]
+    },
+    "PUT": {
+      "forbid_fields": ["string"],
+      "add_required": ["string"],
+      "remove_required": ["string"]
+    },
+    "PATCH": {
+      "forbid_fields": ["string"],
+      "add_required": ["string"],
+      "remove_required": ["string"]
+    }
+  }
 }
 ```
 

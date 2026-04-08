@@ -15,7 +15,7 @@ endpoint: "/products/{id}"
 
 endpoint: "/validators/{id}"
 ```json
-{"kind":"object","fields":{"hash":{"kind":"string"},"version":{"kind":"string"},"endpoint":{"kind":"string"},"schema":{"kind":"object","allowExtra":true}},"required":["version","endpoint","schema"],"allowExtra":false}
+{"kind":"object","fields":{"hash":{"kind":"string"},"version":{"kind":"string"},"endpoint":{"kind":"string"},"schema":{"kind":"object","allowExtra":true},"method_rules":{"kind":"object","fields":{"POST":{"kind":"object","fields":{"forbid_fields":{"kind":"array","items":{"kind":"string"}},"add_required":{"kind":"array","items":{"kind":"string"}},"remove_required":{"kind":"array","items":{"kind":"string"}}},"required":[],"allowExtra":false},"PUT":{"kind":"object","fields":{"forbid_fields":{"kind":"array","items":{"kind":"string"}},"add_required":{"kind":"array","items":{"kind":"string"}},"remove_required":{"kind":"array","items":{"kind":"string"}}},"required":[],"allowExtra":false},"PATCH":{"kind":"object","fields":{"forbid_fields":{"kind":"array","items":{"kind":"string"}},"add_required":{"kind":"array","items":{"kind":"string"}},"remove_required":{"kind":"array","items":{"kind":"string"}}},"required":[],"allowExtra":false}},"required":[],"allowExtra":false}},"required":["version","endpoint","schema"],"allowExtra":false}
 ```
 
 endpoint: "/dictionary/integrationTypes/{id}"

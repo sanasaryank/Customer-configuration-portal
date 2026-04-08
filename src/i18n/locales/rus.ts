@@ -321,6 +321,14 @@ const rus = {
     enum: 'Enum (JSON массив)',
     builder: 'Конструктор',
     jsonPreview: 'JSON превью',
+    methodRules: 'Правила методов',
+    httpMethod: 'HTTP метод',
+    forbidFields: 'Запрещённые поля',
+    addRequired: 'Добавить обязательные',
+    removeRequired: 'Убрать обязательные',
+    noFieldsConfigured: 'Поля не настроены',
+    selectField: 'Выберите поле...',
+    previewMode: 'Режим превью',
   },
 
   // Dictionary (generic)

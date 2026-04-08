@@ -1017,6 +1017,124 @@ objectId
 Details modal/drawer:
 
 render diff list from GET /historyItem/{id}
+10.8 Validators page
+
+Validators define JSON schemas for API endpoint payload validation with method-specific rules.
+
+10.8.1 List page
+
+Columns: version, endpoint
+Row actions: edit, copy, delete, history
+
+10.8.2 Validator modal
+
+Fields: version (required), endpoint (required)
+
+Schema section has three tabs:
+
+Builder tab:
+  Visual schema editor (SchemaBuilder) for the Base schema.
+  The Base schema contains the union of all possible fields across PUT, POST, and PATCH methods.
+
+Method Rules tab:
+  HTTP method selector (POST / PUT / PATCH) to choose which method to configure.
+  For the selected method, three rule categories are editable:
+    forbid_fields — fields from the Base schema that must NOT appear in requests of this method. Selecting a field removes it and its sub-tree from the effective schema.
+    add_required — fields from the Base schema that should become required for this method, even if they are not required in the Base schema. Only non-required fields are available for selection.
+    remove_required — fields from the Base schema that are required in the Base schema but should become optional for this method. Only base-required fields are available for selection.
+  Field selection uses a dropdown populated from the Base schema's field paths (dot-separated, e.g. "generalInfo.name").
+  Field path traversal is recursive through objects, arrays, and maps:
+    - Object fields produce named path segments.
+    - Array items are traversed transparently — if an array's items is an object, its fields are included (e.g. "licenses.name", "licenses.products.productId").
+    - Map values are traversed the same way as array items.
+    - Nesting depth is unlimited: arrays of objects containing arrays of objects are all traversed.
+  Invalid duplicates are prevented: a field cannot appear in multiple conflicting categories.
+  Forbidden fields are excluded from add_required and remove_required selectors.
+
+JSON Preview tab:
+  A preview mode selector allows switching between Base / POST / PUT / PATCH.
+  Base mode shows the raw Base schema.
+  POST / PUT / PATCH modes show the effective schema derived by applying that method's rules to the Base schema:
+    - Fields in forbid_fields are removed
+    - Fields in add_required are added to the required arrays
+    - Fields in remove_required are removed from the required arrays
+
+10.8.3 API payload shape
+
+```json
+{
+  "hash": "string",
+  "version": "string",
+  "endpoint": "string",
+  "schema": {},
+  "method_rules": {
+    "POST": {
+      "forbid_fields": ["path.to.field"],
+      "add_required": ["path.to.field"],
+      "remove_required": ["path.to.field"]
+    },
+    "PUT": { ... },
+    "PATCH": { ... }
+  }
+}
+```
+
+method_rules is optional. If omitted or empty, the Base schema applies equally to all methods.
+
+10.8.4 Effective schema derivation
+
+For a given method M, the effective schema is computed as:
+
+1. Start with a deep clone of the Base schema.
+2. For each path in method_rules[M].forbid_fields: remove the field at that path (and remove it from parent required arrays).
+3. For each path in method_rules[M].add_required: add the field name to the required array of its parent object.
+4. For each path in method_rules[M].remove_required: remove the field name from the required array of its parent object.
+
+10.8.5 Examples
+
+Base schema:
+```json
+{
+  "kind": "object",
+  "fields": {
+    "name": { "kind": "string" },
+    "password": { "kind": "string" },
+    "description": { "kind": "string" }
+  },
+  "required": ["name"],
+  "allowExtra": false
+}
+```
+
+POST rules:
+```json
+{
+  "forbid_fields": [],
+  "add_required": ["password"],
+  "remove_required": []
+}
+```
+Effective POST schema: name required, password required, description optional.
+
+PUT rules:
+```json
+{
+  "forbid_fields": [],
+  "add_required": [],
+  "remove_required": ["name"]
+}
+```
+Effective PUT schema: name optional, password optional, description optional.
+
+PATCH rules:
+```json
+{
+  "forbid_fields": ["password"],
+  "add_required": [],
+  "remove_required": ["name"]
+}
+```
+Effective PATCH schema: name optional, description optional, password field removed entirely.
 11. Exact contract reminders
 Do not change translation keys from ARM/ENG/RUS
 Do not return/store tokens client-side

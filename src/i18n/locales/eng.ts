@@ -322,6 +322,14 @@ const eng = {
     enum: 'Enum (JSON array)',
     builder: 'Builder',
     jsonPreview: 'JSON Preview',
+    methodRules: 'Method Rules',
+    httpMethod: 'HTTP Method',
+    forbidFields: 'Forbidden Fields',
+    addRequired: 'Add Required',
+    removeRequired: 'Remove Required',
+    noFieldsConfigured: 'No fields configured',
+    selectField: 'Select field...',
+    previewMode: 'Preview Mode',
   },
 
   // Dictionary (generic)

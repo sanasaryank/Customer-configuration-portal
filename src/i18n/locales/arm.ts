@@ -323,6 +323,14 @@ const arm = {
     enum: 'Enum (JSON զանգված)',
     builder: 'Կառուցիչ',
     jsonPreview: 'JSON նախադիտարկում',
+    methodRules: 'Մեթոդի կանոններ',
+    httpMethod: 'HTTP մեթոդ',
+    forbidFields: 'Արգելակուրծ դաշտեր',
+    addRequired: 'Ավելացնել պարտադիր',
+    removeRequired: 'Հանել պարտադիր',
+    noFieldsConfigured: 'Դաշտեր չեն կարգավորված',
+    selectField: 'Ընտրեք դաշտ...',
+    previewMode: 'Նախադիտարկման ռեժիմ',
   },
 
   // Տեղեկատու (ընդհանուր)

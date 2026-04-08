@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,25 +10,42 @@ import {
   updateValidator,
 } from '../../api/validators';
 import { queryKeys } from '../../queryKeys';
-import type { ValidatorItem, SchemaNode } from '../../types/validator';
+import type { ValidatorItem, SchemaNode, MethodRules, HttpMethod } from '../../types/validator';
 import { useCrudMutations } from '../../hooks/useCrudMutations';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { useFormError } from '../../hooks/useFormError';
 import { Spinner } from '../../components/ui/Spinner';
 import { Tabs, TabList, TabTrigger, TabPanel } from '../../components/ui/Tabs';
 import SchemaBuilder from './SchemaBuilder';
-import { cleanSchema } from './schemaUtils';
+import MethodRulesEditor from './MethodRulesEditor';
+import { cleanSchema, applyMethodRules } from './schemaUtils';
+
+const methodRuleSetSchema = z.object({
+  forbid_fields: z.array(z.string()),
+  add_required: z.array(z.string()),
+  remove_required: z.array(z.string()),
+});
 
 const formSchema = z.object({
   version: z.string().min(1),
   endpoint: z.string().min(1),
   schema: z.record(z.any()),
+  method_rules: z.record(methodRuleSetSchema).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+type PreviewMode = 'base' | HttpMethod;
+const PREVIEW_OPTIONS: { value: PreviewMode; label: string }[] = [
+  { value: 'base', label: 'Base' },
+  { value: 'POST', label: 'POST' },
+  { value: 'PUT', label: 'PUT' },
+  { value: 'PATCH', label: 'PATCH' },
+];
 
 interface ValidatorModalProps {
   editId: string | null;
@@ -40,6 +57,7 @@ export default function ValidatorModal({ editId, copyFromId, onClose }: Validato
   const { t } = useTranslation();
   const isEdit = editId !== null && !copyFromId;
   const sourceId = isEdit ? editId : copyFromId;
+  const [previewMode, setPreviewMode] = useState<PreviewMode>('base');
 
   const { data: existing, isLoading: loadingItem } = useQuery({
     queryKey: queryKeys.validators.byId(sourceId ?? ''),
@@ -47,12 +65,13 @@ export default function ValidatorModal({ editId, copyFromId, onClose }: Validato
     enabled: !!sourceId,
   });
 
-  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, control, reset, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       version: '',
       endpoint: '',
       schema: { kind: 'object', fields: {}, required: [], allowExtra: true } as SchemaNode,
+      method_rules: {},
     },
   });
 
@@ -62,6 +81,9 @@ export default function ValidatorModal({ editId, copyFromId, onClose }: Validato
         version: existing.version,
         endpoint: existing.endpoint,
         schema: JSON.parse(JSON.stringify(existing.schema)),
+        method_rules: existing.method_rules
+          ? JSON.parse(JSON.stringify(existing.method_rules))
+          : {},
       });
     }
   }, [existing, reset]);
@@ -70,10 +92,15 @@ export default function ValidatorModal({ editId, copyFromId, onClose }: Validato
 
   const { submit, isPending, mutationError } = useCrudMutations<FormValues>(
     {
-      createFn: (v) => createValidator({ ...v, schema: v.schema as SchemaNode }),
+      createFn: (v) => createValidator({
+        ...v,
+        schema: v.schema as SchemaNode,
+        method_rules: v.method_rules as MethodRules,
+      }),
       updateFn: (v) => updateValidator(existing!.id, {
         ...v,
         schema: v.schema as SchemaNode,
+        method_rules: v.method_rules as MethodRules,
         hash: (existing as ValidatorItem).hash,
       }),
       invalidateKeys,
@@ -86,6 +113,20 @@ export default function ValidatorModal({ editId, copyFromId, onClose }: Validato
   const { errorMessage, onValidationError } = useFormError(mutationError);
 
   const title = isEdit ? t('validators.editTitle') : t('validators.createTitle');
+
+  // Watch schema and method_rules for the JSON preview
+  const watchedSchema = watch('schema') as SchemaNode;
+  const watchedRules = watch('method_rules') as MethodRules | undefined;
+
+  const previewJson = useMemo(() => {
+    if (previewMode === 'base') {
+      return JSON.stringify(cleanSchema(watchedSchema), null, 2);
+    }
+    const method = previewMode as HttpMethod;
+    const rules = watchedRules?.[method];
+    const effective = applyMethodRules(watchedSchema, rules);
+    return JSON.stringify(cleanSchema(effective), null, 2);
+  }, [watchedSchema, watchedRules, previewMode]);
 
   return (
     <Modal
@@ -139,6 +180,7 @@ export default function ValidatorModal({ editId, copyFromId, onClose }: Validato
             <Tabs defaultTab="builder">
               <TabList>
                 <TabTrigger value="builder">{t('validators.builder')}</TabTrigger>
+                <TabTrigger value="methodRules">{t('validators.methodRules')}</TabTrigger>
                 <TabTrigger value="json">{t('validators.jsonPreview')}</TabTrigger>
               </TabList>
               <TabPanel value="builder">
@@ -153,16 +195,39 @@ export default function ValidatorModal({ editId, copyFromId, onClose }: Validato
                   )}
                 />
               </TabPanel>
-              <TabPanel value="json">
+              <TabPanel value="methodRules">
                 <Controller
                   control={control}
-                  name="schema"
-                  render={({ field }) => (
-                    <pre className="bg-gray-50 border border-gray-200 rounded-md p-4 text-xs font-mono overflow-auto max-h-[60vh] whitespace-pre text-gray-800">
-                      {JSON.stringify(cleanSchema(field.value as SchemaNode), null, 2)}
-                    </pre>
+                  name="method_rules"
+                  render={({ field: rulesField }) => (
+                    <Controller
+                      control={control}
+                      name="schema"
+                      render={({ field: schemaField }) => (
+                        <MethodRulesEditor
+                          schema={schemaField.value as SchemaNode}
+                          methodRules={(rulesField.value ?? {}) as MethodRules}
+                          onChange={rulesField.onChange}
+                        />
+                      )}
+                    />
                   )}
                 />
+              </TabPanel>
+              <TabPanel value="json">
+                <div className="space-y-3">
+                  <div className="w-48">
+                    <Select
+                      label={t('validators.previewMode')}
+                      options={PREVIEW_OPTIONS}
+                      value={previewMode}
+                      onChange={(e) => setPreviewMode(e.target.value as PreviewMode)}
+                    />
+                  </div>
+                  <pre className="bg-gray-50 border border-gray-200 rounded-md p-4 text-xs font-mono overflow-auto max-h-[60vh] whitespace-pre text-gray-800">
+                    {previewJson}
+                  </pre>
+                </div>
               </TabPanel>
             </Tabs>
           </fieldset>

@@ -38,11 +38,26 @@ export interface SchemaNode {
   keyEnum?: string[];
 }
 
+export type HttpMethod = 'POST' | 'PUT' | 'PATCH';
+
+export interface MethodRuleSet {
+  forbid_fields: string[];
+  add_required: string[];
+  remove_required: string[];
+}
+
+export type MethodRules = Partial<Record<HttpMethod, MethodRuleSet>>;
+
+export function emptyMethodRuleSet(): MethodRuleSet {
+  return { forbid_fields: [], add_required: [], remove_required: [] };
+}
+
 export interface ValidatorListItem {
   id: string;
   version: string;
   endpoint: string;
   schema: SchemaNode;
+  method_rules?: MethodRules;
 }
 
 export interface ValidatorItem extends ValidatorListItem {
@@ -54,6 +69,7 @@ export interface ValidatorCreatePayload {
   version: string;
   endpoint: string;
   schema: SchemaNode;
+  method_rules?: MethodRules;
 }
 
 export interface ValidatorUpdatePayload extends ValidatorCreatePayload {
