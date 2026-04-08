@@ -90,6 +90,15 @@ export function IconShare() {
   );
 }
 
+export function IconCopy() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="5.5" y="5.5" width="9" height="9" rx="1" />
+      <path d="M10.5 5.5V2.5a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h3" />
+    </svg>
+  );
+}
+
 // ─── RowActions component ─────────────────────────────────────────────────────
 
 export interface RowAction {

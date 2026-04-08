@@ -102,4 +102,8 @@ export const FILTER_CONFIGS: Record<string, FilterFieldConfig[]> = {
     { key: 'name',   labelKey: 'common.name',    type: 'text' },
     STATUS_SWITCH,
   ],
+  [ROUTES.VALIDATORS]: [
+    { key: 'version',  labelKey: 'validators.version',  type: 'text' },
+    { key: 'endpoint', labelKey: 'validators.endpoint', type: 'text' },
+  ],
 };

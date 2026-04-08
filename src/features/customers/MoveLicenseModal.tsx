@@ -115,7 +115,7 @@ export default function MoveLicenseModal({
   const mutation = useMutation({
     mutationFn: (payload: MoveLicensePayload) => moveLicense(selectedDstId!, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.customers.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.customers.all, exact: true });
       onClose();
     },
   });

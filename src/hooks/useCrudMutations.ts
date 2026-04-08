@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 interface UseCrudMutationsOptions<TFormValues> {
   createFn: (values: TFormValues) => Promise<unknown>;
   updateFn: (values: TFormValues) => Promise<unknown>;
-  /** Query keys to invalidate on success (e.g. list key + item key). */
+  /** Query keys to invalidate on success (e.g. list key). */
   invalidateKeys: readonly (readonly unknown[])[];
   onClose: () => void;
 }
@@ -17,7 +17,7 @@ export function useCrudMutations<TFormValues>(
 
   const onSuccess = () => {
     for (const key of invalidateKeys) {
-      queryClient.invalidateQueries({ queryKey: key });
+      queryClient.invalidateQueries({ queryKey: key, exact: true });
     }
     onClose();
   };

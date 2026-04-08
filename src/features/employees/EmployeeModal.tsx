@@ -78,10 +78,7 @@ export default function EmployeeModal({ editId, onClose }: EmployeeModalProps) {
     }
   }, [existing, reset]);
 
-  const invalidateKeys = [
-    queryKeys.employees.all,
-    ...(editId ? [queryKeys.employees.byId(editId)] : []),
-  ];
+  const invalidateKeys = [queryKeys.employees.all];
 
   const { submit, isPending, mutationError } = useCrudMutations<FormValues>(
     {
@@ -91,7 +88,6 @@ export default function EmployeeModal({ editId, onClose }: EmployeeModalProps) {
         const cleaned = omitEmptyPasswords(values, ['password']);
         return updateEmployee(existing!.id, {
           ...cleaned,
-          id: (existing as Employee).id,
           hash: (existing as Employee).hash,
         } as Parameters<typeof updateEmployee>[1]);
       },

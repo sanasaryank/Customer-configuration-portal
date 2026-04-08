@@ -83,7 +83,7 @@ export default function CustomersPage() {
       const full = await getCustomer(id);
       return updateCustomer(id, { ...full, generalInfo: { ...full.generalInfo, isBlocked } });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.customers.all }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.customers.all, exact: true }),
   });
 
   // Register dropdown options for select filter fields

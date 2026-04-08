@@ -51,4 +51,9 @@ export const queryKeys = {
     all: ['dictionary', 'districts'] as const,
     byId: (id: string) => ['dictionary', 'districts', id] as const,
   },
+  // Validators
+  validators: {
+    all: ['validators'] as const,
+    byId: (id: string) => ['validators', id] as const,
+  },
 } as const;

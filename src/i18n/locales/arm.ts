@@ -89,6 +89,7 @@ const arm = {
     cities: 'Քաղաքներ',
     districts: 'Շրջաններ',
     licenseTypes: 'Լիցենզիայի տեսակներ',
+    validators: 'API',
   },
 
   // Թարգմանության խմբագիր
@@ -290,6 +291,38 @@ const arm = {
     user: 'Օգտատեր',
     product: 'Պրոդուկտ',
     licenseId: 'Լիցենզիայի ID',
+  },
+
+  // Վալիդատорներ
+  validators: {
+    title: 'API Վալիդատорներ',
+    createTitle: 'Ստեղծել վալիդատор',
+    editTitle: 'Խմբագրել վալիդատоրը',
+    version: 'Տարբերակ',
+    endpoint: 'Endpoint',
+    schema: 'Սխեմա',
+    kind: 'Տեսակ',
+    nullable: 'Nullable',
+    minLength: 'Նվազ. երկարություն',
+    maxLength: 'Առավ. երկարություն',
+    pattern: 'Պատտերն',
+    format: 'Ֆоրմատ',
+    min: 'Նվազ',
+    max: 'Առավ',
+    minItems: 'Նվազ. ելեմենտներ',
+    maxItems: 'Առավ. ելեմենտներ',
+    arrayItems: 'Մասսիվի ելեմենտներ',
+    mapValues: 'Map արժեքներ',
+    keyPattern: 'Բանալի պատտերն',
+    keyEnum: 'Թույլատրելի բանալիներ',
+    objectFields: 'Օբյեկտի դաշտեր',
+    allowExtra: 'Թույլատրել լրացուցիչ դաշտեր',
+    addField: 'Ավելացնել դաշտ',
+    renameField: 'Վերանվանել դաշտը',
+    confirmDeleteField: 'Ջնջե՞լ «{{field}}» դաշտը։',
+    enum: 'Enum (JSON զանգված)',
+    builder: 'Կառուցիչ',
+    jsonPreview: 'JSON նախադիտարկում',
   },
 
   // Տեղեկատու (ընդհանուր)

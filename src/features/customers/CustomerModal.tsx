@@ -175,7 +175,7 @@ function buildUpdatePayload(
   existing: Customer,
 ): CustomerUpdatePayload {
   const base = buildCreatePayload(values);
-  return { ...base, id: existing.id, hash: existing.hash };
+  return { ...base, hash: existing.hash };
 }
 
 // ---- Component ----
@@ -238,8 +238,7 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
   }, [existing, reset]);
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.customers.all });
-    if (editId) queryClient.invalidateQueries({ queryKey: queryKeys.customers.byId(editId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.customers.all, exact: true });
   };
 
   const createMutation = useMutation({

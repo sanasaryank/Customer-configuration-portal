@@ -20,6 +20,6 @@ export function useBlockToggle<TFull extends { isBlocked: boolean }>(
       const full = await getItem(id);
       return updateItem(id, { ...full, isBlocked });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: listQueryKey }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: listQueryKey, exact: true }),
   });
 }

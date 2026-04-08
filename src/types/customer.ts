@@ -168,7 +168,6 @@ export interface CustomerCreatePayload {
 }
 
 export interface CustomerUpdatePayload extends CustomerCreatePayload {
-  id: string;
   hash: string;
 }
 

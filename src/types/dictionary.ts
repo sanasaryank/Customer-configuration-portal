@@ -22,7 +22,6 @@ export interface DictionaryCreatePayload {
 }
 
 export interface DictionaryUpdatePayload extends DictionaryCreatePayload {
-  id: string;
   hash: string;
 }
 

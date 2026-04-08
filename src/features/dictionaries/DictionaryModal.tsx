@@ -99,10 +99,7 @@ export default function DictionaryModal({
     }
   }, [existing, reset, hasParent, parentField]);
 
-  const invalidateKeys = [
-    queryKeys.dict(dictKey),
-    ...(editId ? [queryKeys.dictById(dictKey, editId)] : []),
-  ];
+  const invalidateKeys = [queryKeys.dict(dictKey)];
 
   const buildPayload = (values: FormValues) => {
     const base = {
@@ -122,7 +119,6 @@ export default function DictionaryModal({
       updateFn: (values) => {
         const payload = {
           ...buildPayload(values),
-          id: existing!.id,
           hash: (existing as DictionaryItem).hash,
         };
         return updateDictionaryItem(dictKey, existing!.id, payload);

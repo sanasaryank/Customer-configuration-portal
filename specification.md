@@ -56,6 +56,7 @@ PUT /entity/{id} returns updated object in same shape as GET /entity/{id}
 DELETE /entity/{id} returns 200 OK
 
 hash is a normal top-level field.
+id is never included in PUT request bodies — it is already in the URL path.
 
 2.5 Password rule
 
@@ -283,9 +284,20 @@ List / POST payload base shape
   "description": "string",
   "isBlocked": true
 }
-GET by id / POST response / PUT payload / PUT response
+GET by id / POST response / PUT response
 {
   "id": "string",
+  "name": {
+    "ARM": "string",
+    "ENG": "string",
+    "RUS": "string"
+  },
+  "description": "string",
+  "isBlocked": true,
+  "hash": "string"
+}
+PUT payload (same shape without id)
+{
   "name": {
     "ARM": "string",
     "ENG": "string",
@@ -307,7 +319,8 @@ GET by id / POST response / PUT payload / PUT response
   "isBlocked": true
 }
 
-with hash added in GET by id / POST response / PUT payload / PUT response.
+with hash added in GET by id / POST response / PUT response.
+PUT payload includes hash but not id (id is in URL).
 
 5.3 Cities
 {
@@ -322,7 +335,8 @@ with hash added in GET by id / POST response / PUT payload / PUT response.
   "isBlocked": true
 }
 
-with hash added in GET by id / POST response / PUT payload / PUT response.
+with hash added in GET by id / POST response / PUT response.
+PUT payload includes hash but not id (id is in URL).
 
 5.4 Districts
 {
@@ -337,7 +351,8 @@ with hash added in GET by id / POST response / PUT payload / PUT response.
   "isBlocked": true
 }
 
-with hash added in GET by id / POST response / PUT payload / PUT response.
+with hash added in GET by id / POST response / PUT response.
+PUT payload includes hash but not id (id is in URL).
 
 5.5 Employees
 Response shape
@@ -354,7 +369,8 @@ Response shape
   "description": "string"
 }
 
-with hash added in GET by id / POST response / PUT payload / PUT response.
+with hash added in GET by id / POST response / PUT response.
+PUT payload includes hash but not id (id is in URL).
 
 Write-only field rules
 password is required on create
@@ -376,7 +392,6 @@ POST example
 }
 PUT example
 {
-  "id": "string",
   "username": "string",
   "password": "string",
   "name": {
@@ -410,7 +425,8 @@ PUT example
   "description": "string"
 }
 
-with hash added in GET by id / POST response / PUT payload / PUT response.
+with hash added in GET by id / POST response / PUT response.
+PUT payload includes hash but not id (id is in URL).
 
 Rules:
 
@@ -499,7 +515,8 @@ frontend should allow assigning user products only for products where hasUsers =
   ]
 }
 
-with hash added in GET by id / POST response / PUT payload / PUT response.
+with hash added in GET by id / POST response / PUT response.
+PUT payload includes hash but not id (id is in URL).
 
 5.7.2 Write-only fields not returned by backend
 
@@ -787,7 +804,7 @@ create mode
 edit mode
 load full object for edit (GET /{id})
 submit via POST or PUT
-include hash on edit payloads
+include hash on edit payloads (do not include id — it is in the URL)
 8.4 Working days page
 
 Dedicated page with calendar/day management UI. Capabilities:
@@ -1008,6 +1025,7 @@ Do not delete customer license blocks on frontend when product is removed
 Do not create separate CRUD for customer users
 Do not implement backend paging/filtering assumptions
 Do not invent extra endpoints for block/history/logout
+Do not include id in PUT request bodies — it is already in the URL path
 Do not include lastUpdated in customer write payloads
 Do not place endDate inside licenseData — it is a top-level license product field
 Do not offer license renewal for products with licenseModeId = "lifetime"

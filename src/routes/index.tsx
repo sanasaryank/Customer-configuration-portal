@@ -18,6 +18,7 @@ const LicenseMovingPage = lazy(() => import('../features/history/LicenseMovingPa
 const EmployeesPage = lazy(() => import('../features/employees/EmployeesPage'));
 const WorkingDaysPage = lazy(() => import('../features/workingDays/WorkingDaysPage'));
 const DictionaryPage = lazy(() => import('../features/dictionaries/DictionaryPage'));
+const ValidatorsPage = lazy(() => import('../features/validators/ValidatorsPage'));
 
 function Fallback() {
   return <FullPageSpinner />;
@@ -188,6 +189,14 @@ function buildRouter() {
             element: (
               <Suspense fallback={<Fallback />}>
                 <DictionaryPage key="licenseTypes" dictKey="licenseTypes" />
+              </Suspense>
+            ),
+          },
+          {
+            path: ROUTES.VALIDATORS,
+            element: (
+              <Suspense fallback={<Fallback />}>
+                <ValidatorsPage />
               </Suspense>
             ),
           },

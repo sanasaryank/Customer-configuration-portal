@@ -119,7 +119,7 @@ export default function RenewLicenseModal({
       ),
     onSuccess: (updated) => {
       queryClient.setQueryData(queryKeys.customers.byId(customerId), updated);
-      queryClient.invalidateQueries({ queryKey: queryKeys.customers.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.customers.all, exact: true });
       onClose();
     },
   });

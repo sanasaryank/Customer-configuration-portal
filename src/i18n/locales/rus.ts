@@ -87,6 +87,7 @@ const rus = {
     cities: 'Города',
     districts: 'Районы',
     licenseTypes: 'Типы лицензий',
+    validators: 'API',
   },
 
   // Translation editor
@@ -288,6 +289,38 @@ const rus = {
     user: 'Пользователь',
     product: 'Продукт',
     licenseId: 'ID лицензии',
+  },
+
+  // Валидаторы
+  validators: {
+    title: 'API Валидаторы',
+    createTitle: 'Создать валидатор',
+    editTitle: 'Редактировать валидатор',
+    version: 'Версия',
+    endpoint: 'Эндпоинт',
+    schema: 'Схема',
+    kind: 'Тип',
+    nullable: 'Nullable',
+    minLength: 'Мин. длина',
+    maxLength: 'Макс. длина',
+    pattern: 'Паттерн',
+    format: 'Формат',
+    min: 'Мин',
+    max: 'Макс',
+    minItems: 'Мин. элементов',
+    maxItems: 'Макс. элементов',
+    arrayItems: 'Элементы массива',
+    mapValues: 'Значения карты',
+    keyPattern: 'Паттерн ключа',
+    keyEnum: 'Допустимые ключи',
+    objectFields: 'Поля объекта',
+    allowExtra: 'Допускать дополнительные поля',
+    addField: 'Добавить поле',
+    renameField: 'Переименовать поле',
+    confirmDeleteField: 'Удалить поле «{{field}}»?',
+    enum: 'Enum (JSON массив)',
+    builder: 'Конструктор',
+    jsonPreview: 'JSON превью',
   },
 
   // Dictionary (generic)

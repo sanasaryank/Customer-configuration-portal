@@ -96,16 +96,13 @@ export default function ProductModal({ editId, onClose }: ProductModalProps) {
     }
   }, [existing, reset]);
 
-  const invalidateKeys = [
-    queryKeys.products.all,
-    ...(editId ? [queryKeys.products.byId(editId)] : []),
-  ];
+  const invalidateKeys = [queryKeys.products.all];
 
   const { submit, isPending, mutationError } = useCrudMutations<FormValues>(
     {
       createFn: (v) => createProduct(v),
       updateFn: (v) =>
-        updateProduct(existing!.id, { ...v, id: existing!.id, hash: (existing as Product).hash }),
+        updateProduct(existing!.id, { ...v, hash: (existing as Product).hash }),
       invalidateKeys,
       onClose,
     },

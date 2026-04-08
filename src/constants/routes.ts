@@ -19,4 +19,5 @@ export const ROUTES = {
   COUNTRIES: '/handbooks/countries',
   CITIES: '/handbooks/cities',
   DISTRICTS: '/handbooks/districts',
+  VALIDATORS: '/handbooks/validators',
 } as const;

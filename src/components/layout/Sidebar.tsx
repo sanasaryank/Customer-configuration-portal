@@ -49,6 +49,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { label: t('nav.countries'), path: ROUTES.COUNTRIES },
     { label: t('nav.cities'), path: ROUTES.CITIES },
     { label: t('nav.districts'), path: ROUTES.DISTRICTS },
+    { label: t('nav.validators'), path: ROUTES.VALIDATORS },
   ];
 
   if (!isOpen) {

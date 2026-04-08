@@ -39,6 +39,9 @@ export const ENDPOINTS = {
   DICT_COUNTRIES: '/dictionary/countries',
   DICT_CITIES: '/dictionary/cities',
   DICT_DISTRICTS: '/dictionary/districts',
+
+  // Validators
+  VALIDATORS: '/validators',
 } as const;
 
 import type { DictionaryKey } from '../types/dictionary';

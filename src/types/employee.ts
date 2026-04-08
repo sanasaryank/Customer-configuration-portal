@@ -28,7 +28,6 @@ export interface EmployeeCreatePayload {
 
 // PUT payload — password optional, hash required
 export interface EmployeeUpdatePayload {
-  id: string;
   username: string;
   password?: string;
   name: Translation;

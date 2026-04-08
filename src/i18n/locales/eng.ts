@@ -88,6 +88,7 @@ const eng = {
     cities: 'Cities',
     districts: 'Districts',
     licenseTypes: 'License Types',
+    validators: 'API',
   },
 
   // Translation editor
@@ -289,6 +290,38 @@ const eng = {
     user: 'User',
     product: 'Product',
     licenseId: 'License ID',
+  },
+
+  // Validators
+  validators: {
+    title: 'API Validators',
+    createTitle: 'Create Validator',
+    editTitle: 'Edit Validator',
+    version: 'Version',
+    endpoint: 'Endpoint',
+    schema: 'Schema',
+    kind: 'Type',
+    nullable: 'Nullable',
+    minLength: 'Min Length',
+    maxLength: 'Max Length',
+    pattern: 'Pattern',
+    format: 'Format',
+    min: 'Min',
+    max: 'Max',
+    minItems: 'Min Items',
+    maxItems: 'Max Items',
+    arrayItems: 'Array Items',
+    mapValues: 'Map Values',
+    keyPattern: 'Key Pattern',
+    keyEnum: 'Allowed Keys',
+    objectFields: 'Object Fields',
+    allowExtra: 'Allow Extra Fields',
+    addField: 'Add Field',
+    renameField: 'Rename field',
+    confirmDeleteField: 'Delete field "{{field}}"?',
+    enum: 'Enum (JSON array)',
+    builder: 'Builder',
+    jsonPreview: 'JSON Preview',
   },
 
   // Dictionary (generic)

@@ -39,6 +39,5 @@ export interface ProductCreatePayload {
 }
 
 export interface ProductUpdatePayload extends ProductCreatePayload {
-  id: string;
   hash: string;
 }
