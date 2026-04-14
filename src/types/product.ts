@@ -16,6 +16,7 @@ export interface LicenseTemplateField {
 
 export interface ProductListItem {
   id: string;
+  productId: string;
   groupId: string;
   name: Translation;
   isBlocked: boolean;
@@ -31,6 +32,7 @@ export interface Product extends ProductListItem {
 
 export interface ProductCreatePayload {
   id?: string;
+  productId: string;
   groupId: string;
   name: Translation;
   isBlocked: boolean;

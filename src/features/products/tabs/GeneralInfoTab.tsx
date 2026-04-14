@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getDictionary } from '../../../api/dictionaries';
 import { queryKeys } from '../../../queryKeys';
 import { useAuth } from '../../../providers/AuthProvider';
+import { Input } from '../../../components/ui/Input';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import { Textarea } from '../../../components/ui/Textarea';
 import { TranslationEditor } from '../../../components/form/TranslationEditor';
@@ -21,6 +22,7 @@ export function ProductGeneralInfoTab() {
 
   return (
     <div className="space-y-4">
+      <Input label={t('products.productId')} error={errors.productId?.message as string | undefined} required {...register('productId')} />
       <TranslationEditor fieldName="name" label={t('common.name')} required />
       <DictionarySelect name="groupId" label={t('products.group')} items={productGroups} lang={lang} required />
       <Checkbox label={t('products.hasUsers')} {...register('hasUsers')} />

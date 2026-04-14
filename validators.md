@@ -10,7 +10,7 @@ endpoint: "/employees/{id}"
 
 endpoint: "/products/{id}"
 ```json
-{"kind":"object","fields":{"hash":{"kind":"string"},"groupId":{"kind":"string"},"name":{"kind":"object","fields":{"ARM":{"kind":"string"},"ENG":{"kind":"string"},"RUS":{"kind":"string"}},"required":["ARM","ENG","RUS"],"allowExtra":false},"isBlocked":{"kind":"boolean"},"licenseTemplate":{"kind":"array","items":{"kind":"object","fields":{"name":{"kind":"string"},"kind":{"kind":"string","enum":["string","number","date","time","datetime","boolean"]},"required":{"kind":"boolean"}},"required":["name","kind","required"],"allowExtra":false}},"hasUsers":{"kind":"boolean"},"description":{"kind":"string"}},"required":["groupId","name","isBlocked","licenseTemplate","hasUsers","description"],"allowExtra":false}
+{"kind":"object","fields":{"hash":{"kind":"string"},"productId":{"kind":"string"},"groupId":{"kind":"string"},"name":{"kind":"object","fields":{"ARM":{"kind":"string"},"ENG":{"kind":"string"},"RUS":{"kind":"string"}},"required":["ARM","ENG","RUS"],"allowExtra":false},"isBlocked":{"kind":"boolean"},"licenseTemplate":{"kind":"array","items":{"kind":"object","fields":{"name":{"kind":"string"},"kind":{"kind":"string","enum":["string","number","date","time","datetime","boolean"]},"required":{"kind":"boolean"}},"required":["name","kind","required"],"allowExtra":false}},"hasUsers":{"kind":"boolean"},"description":{"kind":"string"}},"required":["groupId","name","isBlocked","licenseTemplate","hasUsers","description","productId"],"allowExtra":false}
 ```
 
 endpoint: "/validators/{id}"

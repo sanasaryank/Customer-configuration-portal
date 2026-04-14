@@ -88,6 +88,7 @@ endpoint: "/products/{id}"
 ```json
 {
   "hash": "string",
+  "productId": "string",
   "groupId": "string",
   "name": { "ARM": "string", "ENG": "string", "RUS": "string" },
   "isBlocked": "boolean",

@@ -387,6 +387,7 @@ PUT example
 5.6 Products
 {
   "id": "string",
+  "productId": "string",
   "groupId": "string",
   "name": {
     "ARM": "string",

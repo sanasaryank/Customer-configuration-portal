@@ -1,4 +1,4 @@
-// Armenian locale
+﻿// Armenian locale
 // NOTE: Non-blocking assumption — actual Armenian translations require a human translator.
 // Placeholder values use Armenian Unicode strings where known; otherwise English fallback is used.
 const arm = {
@@ -153,6 +153,7 @@ const arm = {
     kindDatetime: 'Ամսաթիվ և ժամ',
     kindBoolean: '\u0532\u0578\u0582\u056c\u0575\u0561\u0576',
     generalInfo: '\u0540\u056b\u0574\u0576\u0561\u056f\u0561\u0576 \u057f\u0565\u0572\u0565\u056f\u0578\u0582\u0569\u0575\u0578\u0582\u0576',
+    productId: '\u0531\u057a\u0580\u0561\u0576\u0584\u056b ID',
   },
 
   // \u054a\u056b\u057f\u0561\u056f\u0576\u0565\u0580

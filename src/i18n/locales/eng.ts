@@ -152,6 +152,7 @@ const eng = {
     kindDatetime: 'DateTime',
     kindBoolean: 'Boolean',
     generalInfo: 'General Info',
+    productId: 'Product ID',
   },
 
   // Tags

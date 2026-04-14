@@ -26,6 +26,7 @@ const licenseFieldSchema = z.object({
 });
 
 const schema = z.object({
+  productId: z.string().min(1),
   groupId: z.string().min(1),
   name: z.object({ ARM: z.string(), ENG: z.string(), RUS: z.string() }),
   isBlocked: z.boolean(),
@@ -55,6 +56,7 @@ export default function ProductModal({ editId, onClose }: ProductModalProps) {
   const methods = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
+      productId: '',
       groupId: '',
       name: { ARM: '', ENG: '', RUS: '' },
       isBlocked: false,
@@ -69,6 +71,7 @@ export default function ProductModal({ editId, onClose }: ProductModalProps) {
   React.useEffect(() => {
     if (existing) {
       reset({
+        productId: existing.productId,
         groupId: existing.groupId,
         name: existing.name,
         isBlocked: existing.isBlocked,

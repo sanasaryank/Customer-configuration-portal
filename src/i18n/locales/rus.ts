@@ -151,6 +151,7 @@ const rus = {
     kindDatetime: 'Дата и время',
     kindBoolean: 'Логический',
     generalInfo: 'Основная информация',
+    productId: 'ID продукта',
   },
 
   // Tags
