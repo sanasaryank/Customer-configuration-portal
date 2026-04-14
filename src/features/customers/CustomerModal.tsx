@@ -27,6 +27,7 @@ import { GeneralInfoTab } from './tabs/GeneralInfoTab';
 import { ContactInfoTab } from './tabs/ContactInfoTab';
 import { LicenseInfoTab } from './tabs/LicenseInfoTab';
 import { UsersTab } from './tabs/UsersTab';
+import { CustomerTagsTab } from './tabs/TagsTab';
 
 // ---- Zod schema ----
 
@@ -111,6 +112,7 @@ const schema = z.object({
       isBlocked: z.boolean(),
     }),
   ),
+  tags: z.array(z.string()),
 });
 
 // ---- Default values ----
@@ -139,6 +141,7 @@ function defaultFormValues(): CustomerFormValues {
     },
     licenseInfo: { licenses: [] },
     users: [],
+    tags: [],
   };
 }
 
@@ -167,6 +170,7 @@ function buildCreatePayload(values: CustomerFormValues): CustomerCreatePayload {
     contactInfo: values.contactInfo,
     licenseInfo: { licenses },
     users,
+    tags: values.tags,
   };
 }
 
@@ -233,6 +237,7 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
           ...u,
           password: '', // never prefill write-only
         })),
+        tags: (existing as any).tags ?? [],
       } as any);
     }
   }, [existing, reset]);
@@ -268,6 +273,7 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
     { value: 'contact', label: t('customers.contactInfo') },
     { value: 'license', label: t('customers.licenseInfo') },
     { value: 'users', label: t('customers.users') },
+    { value: 'tags', label: t('tags.title') },
   ];
 
   return (
@@ -321,6 +327,9 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
               </TabPanel>
               <TabPanel value="users">
                 <UsersTab isEdit={isEdit} />
+              </TabPanel>
+              <TabPanel value="tags">
+                <CustomerTagsTab />
               </TabPanel>
             </Tabs>
 

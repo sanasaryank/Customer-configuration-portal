@@ -28,10 +28,6 @@ import { ROUTES } from '../../constants/routes';
 
 const DICT_TITLE_KEYS: Record<DictionaryKey, string> = {
   integrationTypes: 'nav.integrationTypes',
-  restaurantTypes: 'nav.restaurantTypes',
-  hotelTypes: 'nav.hotelTypes',
-  menuTypes: 'nav.menuTypes',
-  priceSegments: 'nav.priceSegments',
   productGroups: 'nav.productGroups',
   customerGroups: 'nav.customerGroups',
   customerStatus: 'nav.customerStatus',

@@ -27,7 +27,7 @@
                 action, sortable, filter
                 Action buttons: View 
     4. Dictionaries
-        Employees, IntegrationTypes, RestaurantTypes, HotelTypes, MenuTypes, PriceSegments, ProductGroups, CustomerGroups, Countries
+        Employees, IntegrationTypes, ProductGroups, CustomerGroups, Countries
             List:
                 Columns:
                     id, sortable

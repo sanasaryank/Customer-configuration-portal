@@ -22,6 +22,7 @@ export interface ProductListItem {
   licenseTemplate: LicenseTemplateField[];
   hasUsers: boolean;
   description: string;
+  tags: string[];
 }
 
 export interface Product extends ProductListItem {
@@ -36,6 +37,7 @@ export interface ProductCreatePayload {
   licenseTemplate: LicenseTemplateField[];
   hasUsers: boolean;
   description: string;
+  tags: string[];
 }
 
 export interface ProductUpdatePayload extends ProductCreatePayload {

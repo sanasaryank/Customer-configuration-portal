@@ -1,26 +1,23 @@
 import React from 'react';
-import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getProduct, createProduct, updateProduct } from '../../api/products';
-import { getDictionary } from '../../api/dictionaries';
 import { queryKeys } from '../../queryKeys';
 import type { Product } from '../../types/product';
-import { useAuth } from '../../providers/AuthProvider';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Select } from '../../components/ui/Select';
-import { Textarea } from '../../components/ui/Textarea';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { ErrorBanner } from '../../components/ui/ErrorBanner';
 import { useFormError } from '../../hooks/useFormError';
 import { useCrudMutations } from '../../hooks/useCrudMutations';
-import { TranslationEditor } from '../../components/form/TranslationEditor';
-import { DictionarySelect } from '../../components/form/DictionarySelect';
 import { Spinner } from '../../components/ui/Spinner';
+import { Tabs, TabList, TabTrigger, TabPanel } from '../../components/ui/Tabs';
+import { ProductGeneralInfoTab } from './tabs/GeneralInfoTab';
+import { ProductLicenseTemplateTab } from './tabs/LicenseTemplateTab';
+import { ProductTagsTab } from './tabs/TagsTab';
 
 const licenseFieldSchema = z.object({
   name: z.string().min(1),
@@ -35,18 +32,10 @@ const schema = z.object({
   hasUsers: z.boolean(),
   licenseTemplate: z.array(licenseFieldSchema),
   description: z.string(),
+  tags: z.array(z.string()),
 });
 
 type FormValues = z.infer<typeof schema>;
-
-const KIND_OPTIONS = [
-  { value: 'string', label: 'String' },
-  { value: 'number', label: 'Number' },
-  { value: 'date', label: 'Date' },
-  { value: 'time', label: 'Time' },
-  { value: 'datetime', label: 'DateTime' },
-  { value: 'boolean', label: 'Boolean' },
-];
 
 interface ProductModalProps {
   editId: string | null;
@@ -55,18 +44,12 @@ interface ProductModalProps {
 
 export default function ProductModal({ editId, onClose }: ProductModalProps) {
   const { t } = useTranslation();
-  const { lang } = useAuth();
   const isEdit = editId !== null;
 
   const { data: existing, isLoading: loadingItem } = useQuery({
     queryKey: queryKeys.products.byId(editId ?? ''),
     queryFn: () => getProduct(editId!),
     enabled: isEdit,
-  });
-
-  const { data: productGroups = [] } = useQuery({
-    queryKey: queryKeys.dict('productGroups'),
-    queryFn: () => getDictionary('productGroups'),
   });
 
   const methods = useForm<FormValues>({
@@ -78,10 +61,10 @@ export default function ProductModal({ editId, onClose }: ProductModalProps) {
       hasUsers: false,
       licenseTemplate: [],
       description: '',
+      tags: [],
     },
   });
-  const { reset, register, handleSubmit, formState: { errors }, control } = methods;
-  const { fields, append, remove } = useFieldArray({ control, name: 'licenseTemplate' });
+  const { reset, register, handleSubmit } = methods;
 
   React.useEffect(() => {
     if (existing) {
@@ -92,6 +75,7 @@ export default function ProductModal({ editId, onClose }: ProductModalProps) {
         hasUsers: existing.hasUsers,
         licenseTemplate: existing.licenseTemplate ?? [],
         description: existing.description ?? '',
+        tags: (existing as any).tags ?? [],
       });
     }
   }, [existing, reset]);
@@ -112,12 +96,20 @@ export default function ProductModal({ editId, onClose }: ProductModalProps) {
   const onSubmit = (v: FormValues) => submit(v);
   const { errorMessage, onValidationError } = useFormError(mutationError);
 
+  const TABS = [
+    { value: 'general', label: t('products.generalInfo') },
+    { value: 'licenseTemplate', label: t('products.licenseTemplate') },
+    { value: 'tags', label: t('tags.title') },
+  ];
+
   return (
     <Modal isOpen onClose={onClose}
       title={isEdit ? t('products.editTitle') : t('products.createTitle')}
-      size="xl"
+      size="3xl"
       footer={
         <>
+          <Checkbox label={t('common.blocked')} {...register('isBlocked')} />
+          <div className="flex-1" />
           <Button variant="secondary" onClick={onClose} disabled={isPending}>{t('common.cancel')}</Button>
           <Button type="submit" form="product-form" loading={isPending}>{t('common.save')}</Button>
         </>
@@ -127,65 +119,25 @@ export default function ProductModal({ editId, onClose }: ProductModalProps) {
         <div className="flex justify-center py-8"><Spinner /></div>
       ) : (
         <FormProvider {...methods}>
-          <form id="product-form" onSubmit={handleSubmit(onSubmit, onValidationError)} className="space-y-4" noValidate>
-            <TranslationEditor fieldName="name" label={t('common.name')} required />
-
-            <DictionarySelect name="groupId" label={t('products.group')} items={productGroups} lang={lang} required />
-
-            <div className="flex gap-6">
-              <Checkbox label={t('products.hasUsers')} {...register('hasUsers')} />
-              <Checkbox label={t('common.blocked')} {...register('isBlocked')} />
-            </div>
-
-            <Textarea label={t('common.description')} error={errors.description?.message} {...register('description')} />
-
-            {/* License template editor */}
-            <fieldset className="border border-gray-200 rounded-md p-3">
-              <legend className="text-sm font-medium text-gray-700 px-1">
-                {t('products.licenseTemplate')}
-              </legend>
-              <div className="space-y-2">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex items-start gap-2 bg-gray-50 p-2 rounded">
-                    <Input
-                      placeholder={t('products.fieldName')}
-                      error={errors.licenseTemplate?.[index]?.name?.message}
-                      required
-                      {...register(`licenseTemplate.${index}.name`)}
-                    />
-                    <Select
-                      options={KIND_OPTIONS}
-                      error={errors.licenseTemplate?.[index]?.kind?.message}
-                      {...register(`licenseTemplate.${index}.kind`)}
-                    />
-                    <div className="flex items-center gap-1 pt-2 shrink-0">
-                      <Checkbox
-                        label={t('products.fieldRequired')}
-                        {...register(`licenseTemplate.${index}.required`)}
-                      />
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      type="button"
-                      className="text-red-600 shrink-0 mt-1"
-                      onClick={() => remove(index)}
-                    >
-                      ✕
-                    </Button>
-                  </div>
+          <form id="product-form" onSubmit={handleSubmit(onSubmit, onValidationError)} noValidate>
+            <Tabs defaultTab="general" orientation="vertical">
+              <TabList>
+                {TABS.map((tab) => (
+                  <TabTrigger key={tab.value} value={tab.value}>
+                    {tab.label}
+                  </TabTrigger>
                 ))}
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => append({ name: '', kind: 'string', required: false })}
-                >
-                  + {t('products.addField')}
-                </Button>
-              </div>
-            </fieldset>
-
+              </TabList>
+              <TabPanel value="general">
+                <ProductGeneralInfoTab />
+              </TabPanel>
+              <TabPanel value="licenseTemplate">
+                <ProductLicenseTemplateTab />
+              </TabPanel>
+              <TabPanel value="tags">
+                <ProductTagsTab />
+              </TabPanel>
+            </Tabs>
             <ErrorBanner message={errorMessage} />
           </form>
         </FormProvider>

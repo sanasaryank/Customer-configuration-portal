@@ -141,6 +141,7 @@ export interface CustomerListItem {
   contactInfo: CustomerContactInfo;
   licenseInfo: CustomerLicenseInfo;
   users: CustomerUser[];
+  tags: string[];
 }
 
 export interface Customer extends CustomerListItem {
@@ -165,6 +166,7 @@ export interface CustomerCreatePayload {
   contactInfo: CustomerContactInfo;
   licenseInfo: CustomerLicenseInfoWrite;
   users: CustomerUserWrite[];
+  tags: string[];
 }
 
 export interface CustomerUpdatePayload extends CustomerCreatePayload {
@@ -189,4 +191,5 @@ export interface CustomerFormValues {
   contactInfo: CustomerContactInfo;
   licenseInfo: CustomerLicenseInfoForm;
   users: CustomerFormUser[];
+  tags: string[];
 }

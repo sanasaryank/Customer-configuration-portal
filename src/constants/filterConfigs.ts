@@ -82,15 +82,13 @@ export const FILTER_CONFIGS: Record<string, FilterFieldConfig[]> = {
     STATUS_SWITCH,
   ],
   [ROUTES.INTEGRATION_TYPES]: [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
-  [ROUTES.RESTAURANT_TYPES]:  [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
-  [ROUTES.HOTEL_TYPES]:       [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
-  [ROUTES.MENU_TYPES]:        [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
-  [ROUTES.PRICE_SEGMENTS]:    [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
   [ROUTES.PRODUCT_GROUPS]:    [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
   [ROUTES.CUSTOMER_GROUPS]:   [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
   [ROUTES.CUSTOMER_STATUS]:   [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
   [ROUTES.LICENSE_TYPES]:     [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
   [ROUTES.COUNTRIES]:         [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
+  [ROUTES.CUSTOMER_TAGS]:     [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
+  [ROUTES.PRODUCT_TAGS]:      [{ key: 'name', labelKey: 'common.name', type: 'text' }, STATUS_SWITCH],
   // key must match geoConfig.parentField used in DictionaryPage filterFields
   [ROUTES.CITIES]: [
     { key: 'countryId', labelKey: 'cities.country', type: 'select' },

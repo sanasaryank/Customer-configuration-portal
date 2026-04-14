@@ -77,10 +77,6 @@ const eng = {
     employees: 'Employees',
     workingDays: 'Working Days',
     integrationTypes: 'Integration Types',
-    restaurantTypes: 'Restaurant Types',
-    hotelTypes: 'Hotel Types',
-    menuTypes: 'Menu Types',
-    priceSegments: 'Price Segments',
     productGroups: 'Product Groups',
     customerGroups: 'Customer Groups',
     customerStatus: 'Customer Status',
@@ -89,6 +85,8 @@ const eng = {
     districts: 'Districts',
     licenseTypes: 'License Types',
     validators: 'API',
+    customerTags: 'Customer Tags',
+    productTags: 'Product Tags',
   },
 
   // Translation editor
@@ -153,6 +151,19 @@ const eng = {
     kindTime: 'Time',
     kindDatetime: 'DateTime',
     kindBoolean: 'Boolean',
+    generalInfo: 'General Info',
+  },
+
+  // Tags
+  tags: {
+    title: 'Tags',
+    items: 'Items',
+    item: 'Item',
+    addItem: 'Add Item',
+    itemCount: 'Items',
+    createTitle: 'Create Tag',
+    editTitle: 'Edit Tag',
+    idNotUnique: 'ID must be unique across all tags and items',
   },
 
   // Customers

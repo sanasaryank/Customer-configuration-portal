@@ -76,10 +76,6 @@ const rus = {
     employees: 'Сотрудники',
     workingDays: 'Рабочие дни',
     integrationTypes: 'Типы интеграции',
-    restaurantTypes: 'Типы ресторанов',
-    hotelTypes: 'Типы отелей',
-    menuTypes: 'Типы меню',
-    priceSegments: 'Ценовые сегменты',
     productGroups: 'Группы продуктов',
     customerGroups: 'Группы клиентов',
     customerStatus: 'Статус клиента',
@@ -88,6 +84,8 @@ const rus = {
     districts: 'Районы',
     licenseTypes: 'Типы лицензий',
     validators: 'API',
+    customerTags: 'Теги клиентов',
+    productTags: 'Теги продуктов',
   },
 
   // Translation editor
@@ -152,6 +150,19 @@ const rus = {
     kindTime: 'Время',
     kindDatetime: 'Дата и время',
     kindBoolean: 'Логический',
+    generalInfo: 'Основная информация',
+  },
+
+  // Tags
+  tags: {
+    title: 'Теги',
+    items: 'Элементы',
+    item: 'Элемент',
+    addItem: 'Добавить элемент',
+    itemCount: 'Элементы',
+    createTitle: 'Создать тег',
+    editTitle: 'Редактировать тег',
+    idNotUnique: 'ID должен быть уникальным среди всех тегов и элементов',
   },
 
   // Customers

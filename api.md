@@ -140,46 +140,6 @@ endpoint: "/dictionary/integrationTypes/{id}"
 }
 ```
 
-endpoint: "/dictionary/restaurantTypes/{id}"
-```json
-{
-  "hash": "string",
-  "name": { "ARM": "string", "ENG": "string", "RUS": "string" },
-  "description": "string",
-  "isBlocked": "boolean"
-}
-```
-
-endpoint: "/dictionary/hotelTypes/{id}"
-```json
-{
-  "hash": "string",
-  "name": { "ARM": "string", "ENG": "string", "RUS": "string" },
-  "description": "string",
-  "isBlocked": "boolean"
-}
-```
-
-endpoint: "/dictionary/menuTypes/{id}"
-```json
-{
-  "hash": "string",
-  "name": { "ARM": "string", "ENG": "string", "RUS": "string" },
-  "description": "string",
-  "isBlocked": "boolean"
-}
-```
-
-endpoint: "/dictionary/priceSegments/{id}"
-```json
-{
-  "hash": "string",
-  "name": { "ARM": "string", "ENG": "string", "RUS": "string" },
-  "description": "string",
-  "isBlocked": "boolean"
-}
-```
-
 endpoint: "/dictionary/productGroups/{id}"
 ```json
 {

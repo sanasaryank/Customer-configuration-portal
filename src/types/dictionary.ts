@@ -1,7 +1,6 @@
 import type { Translation } from './common';
 
-// Applies to: integrationTypes, restaurantTypes, hotelTypes, menuTypes,
-// priceSegments, productGroups, customerGroups, customerStatus
+// Applies to: integrationTypes, productGroups, customerGroups, customerStatus
 
 export interface DictionaryListItem {
   id: string;
@@ -28,10 +27,6 @@ export interface DictionaryUpdatePayload extends DictionaryCreatePayload {
 // All dictionary endpoint keys
 export type DictionaryKey =
   | 'integrationTypes'
-  | 'restaurantTypes'
-  | 'hotelTypes'
-  | 'menuTypes'
-  | 'priceSegments'
   | 'productGroups'
   | 'customerGroups'
   | 'customerStatus'

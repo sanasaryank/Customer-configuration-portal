@@ -1,4 +1,5 @@
 import type { DictionaryKey } from './types/dictionary';
+import type { TagDictionaryKey } from './types/tag';
 
 export const queryKeys = {
   // Auth
@@ -51,6 +52,11 @@ export const queryKeys = {
     all: ['dictionary', 'districts'] as const,
     byId: (id: string) => ['dictionary', 'districts', id] as const,
   },
+  // Tag dictionaries
+  tag: (key: TagDictionaryKey) => ['tag', key] as const,
+  tagById: (key: TagDictionaryKey, id: string) =>
+    ['tag', key, id] as const,
+
   // Validators
   validators: {
     all: ['validators'] as const,

@@ -1,4 +1,4 @@
-﻿// Armenian locale
+// Armenian locale
 // NOTE: Non-blocking assumption — actual Armenian translations require a human translator.
 // Placeholder values use Armenian Unicode strings where known; otherwise English fallback is used.
 const arm = {
@@ -78,10 +78,6 @@ const arm = {
     employees: 'Աշխատակիցներ',
     workingDays: 'Աշխատանքային օրեր',
     integrationTypes: 'Ինտեգրման տեսակներ',
-    restaurantTypes: 'Ռեստորանների տեսակներ',
-    hotelTypes: 'Հյուրանոցների տեսակներ',
-    menuTypes: 'Մենյուի տեսակներ',
-    priceSegments: 'Գնային սեգմենտներ',
     productGroups: 'Պրոդուկտների խմբեր',
     customerGroups: 'Հաճախորդների խմբեր',
     customerStatus: 'Հաճախորդի կարգավիճակ',
@@ -90,6 +86,8 @@ const arm = {
     districts: 'Շրջաններ',
     licenseTypes: 'Լիցենզիայի տեսակներ',
     validators: 'API',
+    customerTags: '\u0540\u0561\u0573\u0561\u056d\u0578\u0580\u0564\u056b \u057a\u056b\u057f\u0561\u056f\u0576\u0565\u0580',
+    productTags: '\u0531\u0580\u057f\u0561\u0564\u0580\u0561\u0576\u0584\u056b \u057a\u056b\u057f\u0561\u056f\u0576\u0565\u0580',
   },
 
   // Թարգմանության խմբագիր
@@ -153,10 +151,23 @@ const arm = {
     kindDate: 'Ամսաթիվ',
     kindTime: 'Ժամ',
     kindDatetime: 'Ամսաթիվ և ժամ',
-    kindBoolean: 'Բուլյան',
+    kindBoolean: '\u0532\u0578\u0582\u056c\u0575\u0561\u0576',
+    generalInfo: '\u0540\u056b\u0574\u0576\u0561\u056f\u0561\u0576 \u057f\u0565\u0572\u0565\u056f\u0578\u0582\u0569\u0575\u0578\u0582\u0576',
   },
 
-  // Հաճախորդներ
+  // \u054a\u056b\u057f\u0561\u056f\u0576\u0565\u0580
+  tags: {
+    title: '\u054a\u056b\u057f\u0561\u056f\u0576\u0565\u0580',
+    items: '\u054f\u0561\u0580\u0580\u0565\u0580',
+    item: '\u054f\u0561\u0580\u0580',
+    addItem: '\u0531\u057e\u0565\u056c\u0561\u0581\u0576\u0565\u056c \u057f\u0561\u0580\u0580',
+    itemCount: '\u054f\u0561\u0580\u0580\u0565\u0580',
+    createTitle: '\u054d\u057f\u0565\u0572\u056e\u0565\u056c \u057a\u056b\u057f\u0561\u056f',
+    editTitle: '\u053d\u0574\u0562\u0561\u0563\u0580\u0565\u056c \u057a\u056b\u057f\u0561\u056f\u0568',
+    idNotUnique: 'ID-\u0576 \u057a\u0565\u057f\u0584 \u0567 \u056c\u056b\u0576\u056b \u0575\u0578\u0582\u0580\u0561\u0570\u0561\u057f\u0578\u0582\u056f \u0562\u0578\u056c\u0578\u0580 \u057a\u056b\u057f\u0561\u056f\u0576\u0565\u0580\u056b \u0587 \u057f\u0561\u0580\u0580\u0565\u0580\u056b \u0574\u0565\u057b',
+  },
+
+  // \u0540\u0561\u0573\u0561\u056d\u0578\u0580\u0564\u0576\u0565\u0580
   customers: {
     title: 'Հաճախորդներ',
     createTitle: 'Ստեղծել հաճախորդ',

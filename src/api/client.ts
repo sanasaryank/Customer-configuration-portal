@@ -2,7 +2,7 @@ import { API_BASE } from '../constants/endpoints';
 import { ROUTES } from '../constants/routes';
 
 const debugHeaders: Record<string, string> = import.meta.env.DEV
-  ? { 'X-Origin': 'cpp.apihub.am' }
+  ? { 'X-Origin': 'ccp.apihub.am' }
   : {};
 
 const HTTP_STATUS_DESCRIPTIONS: Record<number, string> = {

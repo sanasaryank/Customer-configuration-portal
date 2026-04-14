@@ -38,10 +38,6 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { label: t('nav.employees'), path: ROUTES.EMPLOYEES },
     { label: t('nav.workingDays'), path: ROUTES.WORKING_DAYS },
     { label: t('nav.integrationTypes'), path: ROUTES.INTEGRATION_TYPES },
-    { label: t('nav.restaurantTypes'), path: ROUTES.RESTAURANT_TYPES },
-    { label: t('nav.hotelTypes'), path: ROUTES.HOTEL_TYPES },
-    { label: t('nav.menuTypes'), path: ROUTES.MENU_TYPES },
-    { label: t('nav.priceSegments'), path: ROUTES.PRICE_SEGMENTS },
     { label: t('nav.productGroups'), path: ROUTES.PRODUCT_GROUPS },
     { label: t('nav.customerGroups'), path: ROUTES.CUSTOMER_GROUPS },
     { label: t('nav.customerStatus'), path: ROUTES.CUSTOMER_STATUS },
@@ -49,6 +45,8 @@ export function Sidebar({ isOpen }: SidebarProps) {
     { label: t('nav.countries'), path: ROUTES.COUNTRIES },
     { label: t('nav.cities'), path: ROUTES.CITIES },
     { label: t('nav.districts'), path: ROUTES.DISTRICTS },
+    { label: t('nav.customerTags'), path: ROUTES.CUSTOMER_TAGS },
+    { label: t('nav.productTags'), path: ROUTES.PRODUCT_TAGS },
     { label: t('nav.validators'), path: ROUTES.VALIDATORS },
   ];
 

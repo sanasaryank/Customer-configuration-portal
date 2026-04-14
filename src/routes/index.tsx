@@ -18,6 +18,7 @@ const LicenseMovingPage = lazy(() => import('../features/history/LicenseMovingPa
 const EmployeesPage = lazy(() => import('../features/employees/EmployeesPage'));
 const WorkingDaysPage = lazy(() => import('../features/workingDays/WorkingDaysPage'));
 const DictionaryPage = lazy(() => import('../features/dictionaries/DictionaryPage'));
+const TagDictionaryPage = lazy(() => import('../features/tags/TagDictionaryPage'));
 const ValidatorsPage = lazy(() => import('../features/validators/ValidatorsPage'));
 
 function Fallback() {
@@ -129,38 +130,6 @@ function buildRouter() {
             ),
           },
           {
-            path: ROUTES.RESTAURANT_TYPES,
-            element: (
-              <Suspense fallback={<Fallback />}>
-                <DictionaryPage key="restaurantTypes" dictKey="restaurantTypes" />
-              </Suspense>
-            ),
-          },
-          {
-            path: ROUTES.HOTEL_TYPES,
-            element: (
-              <Suspense fallback={<Fallback />}>
-                <DictionaryPage key="hotelTypes" dictKey="hotelTypes" />
-              </Suspense>
-            ),
-          },
-          {
-            path: ROUTES.MENU_TYPES,
-            element: (
-              <Suspense fallback={<Fallback />}>
-                <DictionaryPage key="menuTypes" dictKey="menuTypes" />
-              </Suspense>
-            ),
-          },
-          {
-            path: ROUTES.PRICE_SEGMENTS,
-            element: (
-              <Suspense fallback={<Fallback />}>
-                <DictionaryPage key="priceSegments" dictKey="priceSegments" />
-              </Suspense>
-            ),
-          },
-          {
             path: ROUTES.PRODUCT_GROUPS,
             element: (
               <Suspense fallback={<Fallback />}>
@@ -189,6 +158,23 @@ function buildRouter() {
             element: (
               <Suspense fallback={<Fallback />}>
                 <DictionaryPage key="licenseTypes" dictKey="licenseTypes" />
+              </Suspense>
+            ),
+          },
+          // Tag dictionary pages
+          {
+            path: ROUTES.CUSTOMER_TAGS,
+            element: (
+              <Suspense fallback={<Fallback />}>
+                <TagDictionaryPage key="customerTags" tagKey="customerTags" />
+              </Suspense>
+            ),
+          },
+          {
+            path: ROUTES.PRODUCT_TAGS,
+            element: (
+              <Suspense fallback={<Fallback />}>
+                <TagDictionaryPage key="productTags" tagKey="productTags" />
               </Suspense>
             ),
           },

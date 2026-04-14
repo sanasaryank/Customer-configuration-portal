@@ -225,26 +225,6 @@ GET /dictionary/integrationTypes/{id}
 POST /dictionary/integrationTypes
 PUT /dictionary/integrationTypes/{id}
 DELETE /dictionary/integrationTypes/{id}
-GET /dictionary/restaurantTypes
-GET /dictionary/restaurantTypes/{id}
-POST /dictionary/restaurantTypes
-PUT /dictionary/restaurantTypes/{id}
-DELETE /dictionary/restaurantTypes/{id}
-GET /dictionary/hotelTypes
-GET /dictionary/hotelTypes/{id}
-POST /dictionary/hotelTypes
-PUT /dictionary/hotelTypes/{id}
-DELETE /dictionary/hotelTypes/{id}
-GET /dictionary/menuTypes
-GET /dictionary/menuTypes/{id}
-POST /dictionary/menuTypes
-PUT /dictionary/menuTypes/{id}
-DELETE /dictionary/menuTypes/{id}
-GET /dictionary/priceSegments
-GET /dictionary/priceSegments/{id}
-POST /dictionary/priceSegments
-PUT /dictionary/priceSegments/{id}
-DELETE /dictionary/priceSegments/{id}
 GET /dictionary/productGroups
 GET /dictionary/productGroups/{id}
 POST /dictionary/productGroups
@@ -772,10 +752,6 @@ Implement at least these routes:
 /handbooks/employees
 /handbooks/workingDays
 /handbooks/integrationTypes
-/handbooks/restaurantTypes
-/handbooks/hotelTypes
-/handbooks/menuTypes
-/handbooks/priceSegments
 /handbooks/productGroups
 /handbooks/customerGroups
 /handbooks/customerStatus

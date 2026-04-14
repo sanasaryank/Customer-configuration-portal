@@ -28,10 +28,6 @@ export const ENDPOINTS = {
 
   // Dictionaries
   DICT_INTEGRATION_TYPES: '/dictionary/integrationTypes',
-  DICT_RESTAURANT_TYPES: '/dictionary/restaurantTypes',
-  DICT_HOTEL_TYPES: '/dictionary/hotelTypes',
-  DICT_MENU_TYPES: '/dictionary/menuTypes',
-  DICT_PRICE_SEGMENTS: '/dictionary/priceSegments',
   DICT_PRODUCT_GROUPS: '/dictionary/productGroups',
   DICT_CUSTOMER_GROUPS: '/dictionary/customerGroups',
   DICT_CUSTOMER_STATUS: '/dictionary/customerStatus',
@@ -39,6 +35,10 @@ export const ENDPOINTS = {
   DICT_COUNTRIES: '/dictionary/countries',
   DICT_CITIES: '/dictionary/cities',
   DICT_DISTRICTS: '/dictionary/districts',
+
+  // Tag dictionaries
+  DICT_CUSTOMER_TAGS: '/dictionary/customerTags',
+  DICT_PRODUCT_TAGS: '/dictionary/productTags',
 
   // Validators
   VALIDATORS: '/validators',
@@ -48,10 +48,6 @@ import type { DictionaryKey } from '../types/dictionary';
 
 export const DICT_ENDPOINT_MAP: Record<DictionaryKey, string> = {
   integrationTypes: ENDPOINTS.DICT_INTEGRATION_TYPES,
-  restaurantTypes: ENDPOINTS.DICT_RESTAURANT_TYPES,
-  hotelTypes: ENDPOINTS.DICT_HOTEL_TYPES,
-  menuTypes: ENDPOINTS.DICT_MENU_TYPES,
-  priceSegments: ENDPOINTS.DICT_PRICE_SEGMENTS,
   productGroups: ENDPOINTS.DICT_PRODUCT_GROUPS,
   customerGroups: ENDPOINTS.DICT_CUSTOMER_GROUPS,
   customerStatus: ENDPOINTS.DICT_CUSTOMER_STATUS,
@@ -59,4 +55,11 @@ export const DICT_ENDPOINT_MAP: Record<DictionaryKey, string> = {
   countries: ENDPOINTS.DICT_COUNTRIES,
   cities: ENDPOINTS.DICT_CITIES,
   districts: ENDPOINTS.DICT_DISTRICTS,
+};
+
+import type { TagDictionaryKey } from '../types/tag';
+
+export const TAG_ENDPOINT_MAP: Record<TagDictionaryKey, string> = {
+  customerTags: ENDPOINTS.DICT_CUSTOMER_TAGS,
+  productTags: ENDPOINTS.DICT_PRODUCT_TAGS,
 };

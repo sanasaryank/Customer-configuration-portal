@@ -23,26 +23,6 @@ endpoint: "/dictionary/integrationTypes/{id}"
 {"kind":"object","fields":{"hash":{"kind":"string"},"name":{"kind":"object","fields":{"ARM":{"kind":"string"},"ENG":{"kind":"string"},"RUS":{"kind":"string"}},"required":["ARM","ENG","RUS"],"allowExtra":false},"description":{"kind":"string"},"isBlocked":{"kind":"boolean"}},"required":["name","description","isBlocked"],"allowExtra":false}
 ```
 
-endpoint: "/dictionary/restaurantTypes/{id}"
-```json
-{"kind":"object","fields":{"hash":{"kind":"string"},"name":{"kind":"object","fields":{"ARM":{"kind":"string"},"ENG":{"kind":"string"},"RUS":{"kind":"string"}},"required":["ARM","ENG","RUS"],"allowExtra":false},"description":{"kind":"string"},"isBlocked":{"kind":"boolean"}},"required":["name","description","isBlocked"],"allowExtra":false}
-```
-
-endpoint: "/dictionary/hotelTypes/{id}"
-```json
-{"kind":"object","fields":{"hash":{"kind":"string"},"name":{"kind":"object","fields":{"ARM":{"kind":"string"},"ENG":{"kind":"string"},"RUS":{"kind":"string"}},"required":["ARM","ENG","RUS"],"allowExtra":false},"description":{"kind":"string"},"isBlocked":{"kind":"boolean"}},"required":["name","description","isBlocked"],"allowExtra":false}
-```
-
-endpoint: "/dictionary/menuTypes/{id}"
-```json
-{"kind":"object","fields":{"hash":{"kind":"string"},"name":{"kind":"object","fields":{"ARM":{"kind":"string"},"ENG":{"kind":"string"},"RUS":{"kind":"string"}},"required":["ARM","ENG","RUS"],"allowExtra":false},"description":{"kind":"string"},"isBlocked":{"kind":"boolean"}},"required":["name","description","isBlocked"],"allowExtra":false}
-```
-
-endpoint: "/dictionary/priceSegments/{id}"
-```json
-{"kind":"object","fields":{"hash":{"kind":"string"},"name":{"kind":"object","fields":{"ARM":{"kind":"string"},"ENG":{"kind":"string"},"RUS":{"kind":"string"}},"required":["ARM","ENG","RUS"],"allowExtra":false},"description":{"kind":"string"},"isBlocked":{"kind":"boolean"}},"required":["name","description","isBlocked"],"allowExtra":false}
-```
-
 endpoint: "/dictionary/productGroups/{id}"
 ```json
 {"kind":"object","fields":{"hash":{"kind":"string"},"name":{"kind":"object","fields":{"ARM":{"kind":"string"},"ENG":{"kind":"string"},"RUS":{"kind":"string"}},"required":["ARM","ENG","RUS"],"allowExtra":false},"description":{"kind":"string"},"isBlocked":{"kind":"boolean"}},"required":["name","description","isBlocked"],"allowExtra":false}

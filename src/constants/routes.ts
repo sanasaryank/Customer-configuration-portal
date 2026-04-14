@@ -8,10 +8,6 @@ export const ROUTES = {
   EMPLOYEES: '/handbooks/employees',
   WORKING_DAYS: '/handbooks/workingDays',
   INTEGRATION_TYPES: '/handbooks/integrationTypes',
-  RESTAURANT_TYPES: '/handbooks/restaurantTypes',
-  HOTEL_TYPES: '/handbooks/hotelTypes',
-  MENU_TYPES: '/handbooks/menuTypes',
-  PRICE_SEGMENTS: '/handbooks/priceSegments',
   PRODUCT_GROUPS: '/handbooks/productGroups',
   CUSTOMER_GROUPS: '/handbooks/customerGroups',
   CUSTOMER_STATUS: '/handbooks/customerStatus',
@@ -19,5 +15,7 @@ export const ROUTES = {
   COUNTRIES: '/handbooks/countries',
   CITIES: '/handbooks/cities',
   DISTRICTS: '/handbooks/districts',
+  CUSTOMER_TAGS: '/handbooks/customerTags',
+  PRODUCT_TAGS: '/handbooks/productTags',
   VALIDATORS: '/handbooks/validators',
 } as const;
