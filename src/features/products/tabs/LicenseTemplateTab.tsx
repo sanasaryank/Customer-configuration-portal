@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import { Button } from '../../../components/ui/Button';
+import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 
 const KIND_OPTIONS = [
   { value: 'string', label: 'String' },
@@ -18,6 +20,7 @@ export function ProductLicenseTemplateTab() {
   const { t } = useTranslation();
   const { control, register, formState: { errors } } = useFormContext();
   const { fields, append, remove } = useFieldArray({ control, name: 'licenseTemplate' });
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
   return (
     <div className="space-y-2">
@@ -45,7 +48,7 @@ export function ProductLicenseTemplateTab() {
             size="sm"
             type="button"
             className="text-red-600 shrink-0 mt-1"
-            onClick={() => remove(index)}
+            onClick={() => setDeleteIndex(index)}
           >
             ✕
           </Button>
@@ -59,6 +62,14 @@ export function ProductLicenseTemplateTab() {
       >
         + {t('products.addField')}
       </Button>
+
+      <ConfirmDialog
+        isOpen={deleteIndex !== null}
+        onClose={() => setDeleteIndex(null)}
+        onConfirm={() => { if (deleteIndex !== null) { remove(deleteIndex); setDeleteIndex(null); } }}
+        title={t('products.removeFieldTitle')}
+        message={t('products.removeFieldMessage')}
+      />
     </div>
   );
 }

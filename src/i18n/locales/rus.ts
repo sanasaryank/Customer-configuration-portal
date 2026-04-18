@@ -152,6 +152,8 @@ const rus = {
     kindBoolean: 'Логический',
     generalInfo: 'Основная информация',
     productId: 'ID продукта',
+    removeFieldTitle: 'Удалить поле',
+    removeFieldMessage: 'Вы уверены, что хотите удалить это поле шаблона?',
   },
 
   // Tags
@@ -222,6 +224,8 @@ const rus = {
     removeProductMessage: 'Вы уверены, что хотите удалить этот блок лицензии продукта?',
     copyConnectionFrom: 'Скопировать подключение из',
     addUser: 'Добавить пользователя',
+    removeUserTitle: 'Удалить пользователя',
+    removeUserMessage: 'Вы уверены, что хотите удалить этого пользователя?',
     restoreEmail: 'Email для восстановления',
     allowedProducts: 'Разрешённые продукты',
     noLicenseTemplate: 'Для этого продукта не задан шаблон лицензии',

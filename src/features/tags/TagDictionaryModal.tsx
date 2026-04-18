@@ -171,7 +171,7 @@ export default function TagDictionaryModal({
             className="space-y-4"
             noValidate
           >
-            <TranslationEditor fieldName="name" label={t('common.name')} required />
+            <TranslationEditor fieldName="name" label={t('common.name')} required defaultExpanded={!isEdit} />
 
             <Textarea
               label={t('common.description')}
@@ -184,7 +184,7 @@ export default function TagDictionaryModal({
               {...register('isBlocked')}
             />
 
-            <TagItemsEditor fieldName="items" />
+            <TagItemsEditor fieldName="items" isEdit={isEdit} />
 
             <ErrorBanner message={errorMessage} />
           </form>

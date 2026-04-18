@@ -132,7 +132,7 @@ export default function ProductModal({ editId, onClose }: ProductModalProps) {
                 ))}
               </TabList>
               <TabPanel value="general">
-                <ProductGeneralInfoTab />
+                <ProductGeneralInfoTab isEdit={isEdit} />
               </TabPanel>
               <TabPanel value="licenseTemplate">
                 <ProductLicenseTemplateTab />

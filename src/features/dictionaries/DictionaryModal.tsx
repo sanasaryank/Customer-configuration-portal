@@ -189,7 +189,7 @@ export default function DictionaryModal({
               />
             )}
 
-            <TranslationEditor fieldName="name" label={t('common.name')} required />
+            <TranslationEditor fieldName="name" label={t('common.name')} required defaultExpanded={!isEdit} />
 
             <Textarea
               label={t('common.description')}

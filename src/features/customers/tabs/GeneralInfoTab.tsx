@@ -12,7 +12,7 @@ import { Textarea } from '../../../components/ui/Textarea';
 import { DictionarySelect } from '../../../components/form/DictionarySelect';
 import { TranslationEditor } from '../../../components/form/TranslationEditor';
 
-export function GeneralInfoTab() {
+export function GeneralInfoTab({ isEdit }: { isEdit: boolean }) {
   const { t } = useTranslation();
   const { lang } = useAuth();
   const { register, formState: { errors } } = useFormContext<CustomerFormValues>();
@@ -26,8 +26,8 @@ export function GeneralInfoTab() {
 
   return (
     <div className="space-y-4">
-      <TranslationEditor fieldName="generalInfo.name" label={t('common.name')} required />
-      <TranslationEditor fieldName="generalInfo.legalName" label={t('customers.legalName')} />
+      <TranslationEditor fieldName="generalInfo.name" label={t('common.name')} required defaultExpanded={!isEdit} />
+      <TranslationEditor fieldName="generalInfo.legalName" label={t('customers.legalName')} defaultExpanded={!isEdit} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <DictionarySelect name="generalInfo.responsibleId" label={t('customers.responsible')} items={employeeItems} lang={lang} />

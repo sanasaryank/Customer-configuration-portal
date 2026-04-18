@@ -465,6 +465,17 @@ export function LicenseInfoTab({ isEdit }: { isEdit: boolean }) {
                     ▶
                   </span>
                   {t('customers.license')} #{licIndex + 1}
+                  {(() => {
+                    const prods = (watch(`licenseInfo.licenses.${licIndex}.products`) ?? []) as { productId: string }[];
+                    const names = prods
+                      .map((p) => productMap.get(p.productId))
+                      .filter((p): p is NonNullable<typeof p> => Boolean(p))
+                      .map((p) => resolveTranslation(p.name, lang))
+                      .filter(Boolean);
+                    return names.length > 0
+                      ? <span className="ml-2 text-xs font-normal text-gray-500 truncate">({names.join(', ')})</span>
+                      : null;
+                  })()}
                 </button>
                 <Button
                   type="button"

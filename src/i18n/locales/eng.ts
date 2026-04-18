@@ -153,6 +153,8 @@ const eng = {
     kindBoolean: 'Boolean',
     generalInfo: 'General Info',
     productId: 'Product ID',
+    removeFieldTitle: 'Remove Field',
+    removeFieldMessage: 'Are you sure you want to remove this template field?',
   },
 
   // Tags
@@ -223,6 +225,8 @@ const eng = {
     removeProductMessage: 'Are you sure you want to remove this product license block?',
     copyConnectionFrom: 'Copy connection from',
     addUser: 'Add User',
+    removeUserTitle: 'Remove User',
+    removeUserMessage: 'Are you sure you want to remove this user?',
     restoreEmail: 'Restore Email',
     allowedProducts: 'Allowed Products',
     noLicenseTemplate: 'No license template defined for this product',

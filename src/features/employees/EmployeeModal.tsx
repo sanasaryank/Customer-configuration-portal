@@ -147,7 +147,7 @@ export default function EmployeeModal({ editId, onClose }: EmployeeModalProps) {
               required={!isEdit}
             />
 
-            <TranslationEditor fieldName="name" label={t('common.name')} />
+            <TranslationEditor fieldName="name" label={t('common.name')} defaultExpanded={!isEdit} />
 
             <Select
               id="emp-role"

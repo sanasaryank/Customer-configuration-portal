@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../providers/AuthProvider';
+import { resolveTranslation } from '../../utils/translation';
 import { Input } from '../ui/Input';
 import { Textarea } from '../ui/Textarea';
 import { Checkbox } from '../ui/Checkbox';
@@ -10,11 +12,13 @@ import { TranslationEditor } from './TranslationEditor';
 
 interface TagItemsEditorProps {
   fieldName: string;
+  isEdit?: boolean;
 }
 
-export function TagItemsEditor({ fieldName }: TagItemsEditorProps) {
+export function TagItemsEditor({ fieldName, isEdit }: TagItemsEditorProps) {
   const { t } = useTranslation();
-  const { control, register, formState: { errors } } = useFormContext();
+  const { lang } = useAuth();
+  const { control, register, watch, formState: { errors } } = useFormContext();
   const { fields, append, remove } = useFieldArray({ control, name: fieldName });
 
   const [expandedSet, setExpandedSet] = useState<Set<string>>(new Set());
@@ -45,6 +49,7 @@ export function TagItemsEditor({ fieldName }: TagItemsEditorProps) {
       <div className="space-y-3">
         {fields.map((field, index) => {
           const isExpanded = expandedSet.has(field.id);
+          const itemName = resolveTranslation(watch(`${fieldName}.${index}.name`), lang);
           return (
             <div key={field.id} className="border border-gray-100 rounded bg-gray-50">
               <div
@@ -54,6 +59,9 @@ export function TagItemsEditor({ fieldName }: TagItemsEditorProps) {
                 <span className="text-xs font-medium text-gray-500 flex items-center gap-1">
                   <span className="text-gray-400">{isExpanded ? '▾' : '▸'}</span>
                   {t('tags.item')} #{index + 1}
+                  {!isExpanded && itemName && (
+                    <span className="ml-1 text-gray-400 font-normal truncate">— {itemName}</span>
+                  )}
                 </span>
                 <Button
                   type="button"
@@ -73,7 +81,7 @@ export function TagItemsEditor({ fieldName }: TagItemsEditorProps) {
                     required
                     {...register(`${fieldName}.${index}.id`)}
                   />
-                  <TranslationEditor fieldName={`${fieldName}.${index}.name`} label={t('common.name')} required />
+                  <TranslationEditor fieldName={`${fieldName}.${index}.name`} label={t('common.name')} required defaultExpanded={!isEdit} />
                   <Textarea
                     label={t('common.description')}
                     {...register(`${fieldName}.${index}.description`)}

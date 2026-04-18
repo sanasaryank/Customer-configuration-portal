@@ -317,7 +317,7 @@ export default function CustomerModal({ editId, onClose }: CustomerModalProps) {
               </TabList>
 
               <TabPanel value="general">
-                <GeneralInfoTab />
+                <GeneralInfoTab isEdit={isEdit} />
               </TabPanel>
               <TabPanel value="contact">
                 <ContactInfoTab />
