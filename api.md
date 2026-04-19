@@ -245,3 +245,62 @@ endpoint: "/workingDays/{countryId}" POST
   "action": "add | remove"
 }
 ```
+
+endpoint: "/history" GET — all history items
+endpoint: "/history/{objectId}" GET — history items for one object
+```json
+[
+  {
+    "id": "number",
+    "date": "number (Unix timestamp, seconds)",
+    "userId": "string",
+    "actionType": "create | update | delete",
+    "objectType": "string",
+    "objectId": "string"
+  }
+]
+```
+
+endpoint: "/historyItem/{id}" GET — diff details for one history item
+```json
+{
+  "<fieldName>": {
+    "old": "any",
+    "new": "any"
+  },
+  "<nestedObject>": {
+    "<fieldName>": {
+      "old": "any",
+      "new": "any"
+    }
+  }
+}
+```
+
+endpoint: "/moveLicense" GET — license moving history
+```json
+[
+  {
+    "date": "number (Unix timestamp, seconds)",
+    "from": "string (customerId)",
+    "to": "string (customerId)",
+    "user": "string (employeeId)",
+    "license": {
+      "productId": "string",
+      "licenseModeId": "string",
+      "licenseTypeId": "string",
+      "endDate": "number",
+      "track": "boolean",
+      "licenseKey": "string",
+      "licenseData": {},
+      "connectionInfo": {
+        "connectionTypeId": "string",
+        "host": "string",
+        "port": "number",
+        "serverUsername": "string",
+        "username": "string"
+      }
+    }
+  }
+]
+```
